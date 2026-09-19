@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import ForumShell from '@/components/forum/forum-shell'
 import ThreadCard from '@/components/forum/thread-card'
 import { createClient } from '@/lib/supabase/server'
@@ -29,24 +30,27 @@ export default async function CategoryPage({
   }
 
   const { data: threads, error } = await supabase
-    .from('threads')
+    .from('thread_stats')
     .select(`
       id,
       title,
       content,
       created_at,
-      category:categories(
-        name,
-        slug
-      ),
-      author:profiles(
-        username,
-        team:teams(
-          name
-        )
-      )
+      category_name,
+      category_slug,
+      author_username,
+      team_name,
+      score,
+      vote_count,
+      comment_count
     `)
     .eq('category_id', category.id)
+    .order('score', {
+      ascending: false,
+    })
+    .order('comment_count', {
+      ascending: false,
+    })
     .order('created_at', {
       ascending: false,
     })
@@ -70,14 +74,12 @@ export default async function CategoryPage({
             </p>
           )}
 
-          <div className="mt-5">
-            <a
-              href="/new"
-              className="inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
-            >
-              Create Thread
-            </a>
-          </div>
+          <Link
+            href={`/new?category=${category.id}`}
+            className="mt-5 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
+          >
+            Create Thread
+          </Link>
         </div>
 
         {error ? (
@@ -100,7 +102,7 @@ export default async function CategoryPage({
             </h2>
 
             <p className="mt-2 text-sm text-neutral-500">
-              This community is suspiciously quiet.
+              Start the first discussion.
             </p>
           </div>
         )}

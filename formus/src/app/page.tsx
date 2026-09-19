@@ -9,23 +9,26 @@ export default async function HomePage() {
   const supabase = await createClient()
 
   const { data: threads, error } = await supabase
-    .from('threads')
+    .from('thread_stats')
     .select(`
       id,
       title,
       content,
       created_at,
-      category:categories(
-        name,
-        slug
-      ),
-      author:profiles(
-        username,
-        team:teams(
-          name
-        )
-      )
+      category_name,
+      category_slug,
+      author_username,
+      team_name,
+      score,
+      vote_count,
+      comment_count
     `)
+    .order('score', {
+      ascending: false,
+    })
+    .order('comment_count', {
+      ascending: false,
+    })
     .order('created_at', {
       ascending: false,
     })
@@ -40,18 +43,18 @@ export default async function HomePage() {
           </p>
 
           <h1 className="mt-1 text-3xl font-bold">
-            Latest discussions
+            Top discussions
           </h1>
 
           <p className="mt-2 text-neutral-400">
-            Esports, games, chess and everything the community
-            cannot stop arguing about.
+            The conversations currently getting the most attention.
           </p>
         </div>
 
         {error ? (
           <div className="rounded-xl border border-red-900 bg-red-950/30 p-5 text-red-300">
-            Failed to load discussions.
+            <p>Failed to load discussions.</p>
+
             <pre className="mt-3 overflow-auto text-xs">
               {JSON.stringify(error, null, 2)}
             </pre>
@@ -72,7 +75,7 @@ export default async function HomePage() {
             </h2>
 
             <p className="mt-2 text-sm text-neutral-500">
-              Be the unfortunate pioneer.
+              Someone needs to start an argument.
             </p>
 
             <Link

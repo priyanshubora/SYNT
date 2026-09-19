@@ -3,9 +3,19 @@ import NewThreadForm from '@/components/forum/new-thread-form'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
+type NewThreadPageProps = {
+  searchParams: Promise<{
+    category?: string
+  }>
+}
+
 export const dynamic = 'force-dynamic'
 
-export default async function NewThreadPage() {
+export default async function NewThreadPage({
+  searchParams,
+}: NewThreadPageProps) {
+  const { category: categoryParam } = await searchParams
+
   const supabase = await createClient()
 
   const {
@@ -13,7 +23,11 @@ export default async function NewThreadPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login?next=/new')
+    const next = categoryParam
+      ? `/new?category=${encodeURIComponent(categoryParam)}`
+      : '/new'
+
+    redirect(`/login?next=${encodeURIComponent(next)}`)
   }
 
   const { data: profile } = await supabase
@@ -41,6 +55,10 @@ export default async function NewThreadPage() {
     )
   }
 
+  const selectedCategory = categories.find(
+    (category) => category.id === categoryParam
+  )
+
   return (
     <ForumShell>
       <div className="mx-auto max-w-3xl">
@@ -57,7 +75,10 @@ export default async function NewThreadPage() {
         </p>
 
         <div className="mt-8">
-          <NewThreadForm categories={categories} />
+          <NewThreadForm
+            categories={categories}
+            defaultCategory={selectedCategory?.id}
+          />
         </div>
       </div>
     </ForumShell>

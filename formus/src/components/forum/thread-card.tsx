@@ -6,16 +6,13 @@ type ThreadCardProps = {
     title: string
     content: string
     created_at: string
-    category?: {
-      name: string
-      slug: string
-    } | null
-    author?: {
-      username: string
-      team?: {
-        name: string
-      } | null
-    } | null
+    category_name?: string | null
+    category_slug?: string | null
+    author_username?: string | null
+    team_name?: string | null
+    score?: number | null
+    vote_count?: number | null
+    comment_count?: number | null
   }
 }
 
@@ -32,10 +29,10 @@ export default function ThreadCard({
       href={`/thread/${thread.id}`}
       className="block rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 transition hover:border-neutral-700 hover:bg-neutral-900"
     >
-      <div className="flex items-center gap-2 text-xs text-neutral-500">
-        {thread.category && (
+      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+        {thread.category_name && (
           <span className="rounded-full border border-neutral-700 px-2 py-1">
-            {thread.category.name}
+            {thread.category_name}
           </span>
         )}
 
@@ -54,17 +51,31 @@ export default function ThreadCard({
         {preview}
       </p>
 
-      <div className="mt-4 flex items-center gap-2 text-xs text-neutral-500">
-        <span>
-          {thread.author?.username ?? 'Unknown user'}
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+        <span className="font-medium text-neutral-300">
+          {thread.author_username ?? 'Unknown user'}
         </span>
 
-        {thread.author?.team && (
+        {thread.team_name && (
           <>
             <span>•</span>
-            <span>{thread.author.team.name}</span>
+            <span>{thread.team_name}</span>
           </>
         )}
+      </div>
+
+      <div className="mt-4 flex items-center gap-4 border-t border-neutral-800 pt-4 text-xs text-neutral-500">
+        <span>
+          {thread.score ?? 0} points
+        </span>
+
+        <span>
+          {thread.vote_count ?? 0} votes
+        </span>
+
+        <span>
+          {thread.comment_count ?? 0} comments
+        </span>
       </div>
     </Link>
   )
