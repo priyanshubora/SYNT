@@ -1,12 +1,32 @@
-import Link from 'next/link'
 import ForumShell from '@/components/forum/forum-shell'
 import ThreadCard from '@/components/forum/thread-card'
 import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+
+type CategoryPageProps = {
+  params: Promise<{
+    slug: string
+  }>
+}
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+export default async function CategoryPage({
+  params,
+}: CategoryPageProps) {
+  const { slug } = await params
+
   const supabase = await createClient()
+
+  const { data: category } = await supabase
+    .from('categories')
+    .select('id, name, slug, description')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (!category) {
+    notFound()
+  }
 
   const { data: threads, error } = await supabase
     .from('threads')
@@ -26,6 +46,7 @@ export default async function HomePage() {
         )
       )
     `)
+    .eq('category_id', category.id)
     .order('created_at', {
       ascending: false,
     })
@@ -36,25 +57,32 @@ export default async function HomePage() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <p className="text-sm font-medium text-neutral-500">
-            FORMUS
+            COMMUNITY
           </p>
 
           <h1 className="mt-1 text-3xl font-bold">
-            Latest discussions
+            {category.name}
           </h1>
 
-          <p className="mt-2 text-neutral-400">
-            Esports, games, chess and everything the community
-            cannot stop arguing about.
-          </p>
+          {category.description && (
+            <p className="mt-2 text-neutral-400">
+              {category.description}
+            </p>
+          )}
+
+          <div className="mt-5">
+            <a
+              href="/new"
+              className="inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
+            >
+              Create Thread
+            </a>
+          </div>
         </div>
 
         {error ? (
           <div className="rounded-xl border border-red-900 bg-red-950/30 p-5 text-red-300">
-            Failed to load discussions.
-            <pre className="mt-3 overflow-auto text-xs">
-              {JSON.stringify(error, null, 2)}
-            </pre>
+            Failed to load threads.
           </div>
         ) : threads && threads.length > 0 ? (
           <div className="space-y-4">
@@ -68,19 +96,12 @@ export default async function HomePage() {
         ) : (
           <div className="rounded-xl border border-dashed border-neutral-800 p-10 text-center">
             <h2 className="text-lg font-semibold">
-              No discussions yet
+              No threads yet
             </h2>
 
             <p className="mt-2 text-sm text-neutral-500">
-              Be the unfortunate pioneer.
+              This community is suspiciously quiet.
             </p>
-
-            <Link
-              href="/new"
-              className="mt-5 inline-block rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
-            >
-              Create the first thread
-            </Link>
           </div>
         )}
       </div>
