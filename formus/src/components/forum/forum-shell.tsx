@@ -1,119 +1,66 @@
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import ForumHeader from './forum-header'
+import CommunitySidebar from './community-sidebar'
+import MobileNav from './mobile-nav'
 
 type ForumShellProps = {
   children: React.ReactNode
+  activeSlug?: string
 }
 
-export default async function ForumShell({
+export default function ForumShell({
   children,
+  activeSlug,
 }: ForumShellProps) {
-  const supabase = await createClient()
-
-  const [
-    { data: categories },
-    {
-      data: { user },
-    },
-  ] = await Promise.all([
-    supabase
-      .from('categories')
-      .select('id, name, slug')
-      .order('name'),
-
-    supabase.auth.getUser(),
-  ])
-
-  let profile:
-    | {
-        username: string
-        team: { name: string } | null
-      }
-    | null = null
-
-  if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, team:teams(name)')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    profile = data
-  }
-
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
-      <header className="border-b border-neutral-800">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight"
-          >
-            FORMUS
-          </Link>
+    <div
+      className="min-h-screen"
+      style={{
+        background: 'var(--page-background)',
+        color: 'var(--text-primary)',
+      }}
+    >
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/new"
-              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-neutral-200"
-            >
-              Create Thread
-            </Link>
+      <ForumHeader />
 
-            {user && profile ? (
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold">
-                  {profile.username}
-                </p>
+      <MobileNav activeSlug={activeSlug} />
 
-                {profile.team && (
-                  <p className="text-xs text-neutral-400">
-                    {profile.team.name}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="text-sm text-neutral-300 hover:text-white"
-              >
-                Sign in
-              </Link>
-            )}
-          </div>
+      <div className="mx-auto flex max-w-[1400px]">
+
+        {/* SIDEBAR */}
+        <div className="hidden md:block">
+          <CommunitySidebar activeSlug={activeSlug} />
         </div>
-      </header>
 
-      <div className="mx-auto flex max-w-7xl">
-        <aside className="hidden min-h-[calc(100vh-73px)] w-56 shrink-0 border-r border-neutral-800 p-5 md:block">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Communities
-          </p>
-
-          <nav className="space-y-1">
-            <Link
-              href="/"
-              className="block rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
-            >
-              Home
-            </Link>
-
-            {categories?.map((category) => (
-              <Link
-                key={category.id}
-                href={`/category/${category.slug}`}
-                className="block rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
-              >
-                {category.name}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">
+        {/* MAIN CONTENT */}
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-5 md:px-5 md:py-5">
           {children}
         </main>
+
       </div>
+
+      {/* FOOTER */}
+      <footer
+        className="mt-10 border-t"
+        style={{
+          background: 'var(--surface)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        <div className="mx-auto flex max-w-[1400px] flex-col justify-between gap-3 px-5 py-5 text-[9px] text-[#9aa4b2] sm:flex-row">
+
+          <span>
+            © 2025 SNYT Esports. Built for competitive gaming communities.
+          </span>
+
+          <div className="flex gap-5">
+            <span>Guidelines</span>
+            <span>Privacy</span>
+            <span>Support</span>
+          </div>
+
+        </div>
+      </footer>
+
     </div>
   )
 }

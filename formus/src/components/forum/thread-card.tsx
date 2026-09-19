@@ -5,77 +5,125 @@ type ThreadCardProps = {
     id: string
     title: string
     content: string
-    created_at: string
     category_name?: string | null
     category_slug?: string | null
     author_username?: string | null
     team_name?: string | null
+    created_at: string
     score?: number | null
-    vote_count?: number | null
     comment_count?: number | null
   }
+}
+
+function timeAgo(date: string) {
+  const seconds = Math.floor(
+    (Date.now() - new Date(date).getTime()) / 1000
+  )
+
+  if (seconds < 60) {
+    return `${Math.max(seconds, 0)}s ago`
+  }
+
+  const minutes = Math.floor(seconds / 60)
+
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+
+  const hours = Math.floor(minutes / 60)
+
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+
+  const days = Math.floor(hours / 24)
+
+  return `${days}d ago`
 }
 
 export default function ThreadCard({
   thread,
 }: ThreadCardProps) {
-  const preview =
-    thread.content.length > 180
-      ? `${thread.content.slice(0, 180)}...`
-      : thread.content
-
   return (
     <Link
       href={`/thread/${thread.id}`}
-      className="block rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 transition hover:border-neutral-700 hover:bg-neutral-900"
+      className="thread-card group block border-b px-4 py-4 transition sm:px-5"
     >
-      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-        {thread.category_name && (
-          <span className="rounded-full border border-neutral-700 px-2 py-1">
-            {thread.category_name}
+      <div className="flex gap-4">
+
+        {/* VOTE COLUMN */}
+        <div className="flex w-[38px] shrink-0 flex-col items-center pt-1">
+
+          <span className="text-[13px] text-[#7b8798] transition group-hover:text-[#286ff1]">
+            △
           </span>
-        )}
 
-        <span>•</span>
+          <span className="mt-0.5 text-[13px] font-bold text-[#273449] dark:text-[#e5e7eb]">
+            {thread.score ?? 0}
+          </span>
 
-        <span>
-          {new Date(thread.created_at).toLocaleDateString()}
-        </span>
-      </div>
+          <span className="mt-0.5 text-[7px] uppercase tracking-wide text-[#a3adba] dark:text-[#777]">
+            votes
+          </span>
 
-      <h2 className="mt-3 text-lg font-semibold text-white">
-        {thread.title}
-      </h2>
+        </div>
 
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-neutral-400">
-        {preview}
-      </p>
+        {/* THREAD CONTENT */}
+        <div className="min-w-0 flex-1">
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-        <span className="font-medium text-neutral-300">
-          {thread.author_username ?? 'Unknown user'}
-        </span>
+          {/* META */}
+          <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[9px] text-[#9aa4b2] dark:text-[#888]">
 
-        {thread.team_name && (
-          <>
+            {thread.category_name && (
+              <span className="rounded-[3px] bg-[#eef4ff] px-2 py-1 font-semibold text-[#4c76c4] dark:bg-[#26344a] dark:text-[#83aeff]">
+                {thread.category_name}
+              </span>
+            )}
+
             <span>•</span>
-            <span>{thread.team_name}</span>
-          </>
-        )}
-      </div>
 
-      <div className="mt-4 flex items-center gap-4 border-t border-neutral-800 pt-4 text-xs text-neutral-500">
-        <span>
-          {thread.score ?? 0} points
-        </span>
+            <span>
+              Posted by{' '}
+              <span className="font-semibold text-[#526175] dark:text-[#c5cbd4]">
+                {thread.author_username ?? 'user'}
+              </span>
+            </span>
 
-        <span>
-          {thread.vote_count ?? 0} votes
-        </span>
+            <span>
+              {timeAgo(thread.created_at)}
+            </span>
 
-        <span>
-          {thread.comment_count ?? 0} comments
-        </span>
+          </div>
+
+          {/* TITLE */}
+          <h2 className="text-[14px] font-bold leading-[1.35] text-[#111827] transition group-hover:text-[#2468db] dark:text-[#f4f4f5] sm:text-[15px]">
+            {thread.title}
+          </h2>
+
+          {/* CONTENT */}
+          <p className="mt-1 line-clamp-2 text-[11px] leading-[1.55] text-[#788497] dark:text-[#a1a1aa]">
+            {thread.content}
+          </p>
+
+          {/* BOTTOM META */}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[9px] text-[#788497] dark:text-[#888]">
+
+            <span>
+              ◉ {thread.comment_count ?? 0} replies
+            </span>
+
+            <span className="text-[#d0d5dd] dark:text-[#555]">
+              •
+            </span>
+
+            <span>
+              Last active recently
+            </span>
+
+          </div>
+
+        </div>
+
       </div>
     </Link>
   )
