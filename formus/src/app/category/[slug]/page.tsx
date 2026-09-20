@@ -61,6 +61,11 @@ const communityData: Record<
 
 const THREADS_PER_PAGE = 30
 
+type SortType =
+  | 'latest'
+  | 'top'
+  | 'replies'
+
 type CategoryPageProps = {
   params: Promise<{
     slug: string
@@ -68,6 +73,7 @@ type CategoryPageProps = {
 
   searchParams: Promise<{
     page?: string
+    sort?: string
   }>
 }
 
@@ -76,7 +82,7 @@ export default async function CategoryPage({
   searchParams,
 }: CategoryPageProps) {
   const { slug } = await params
-  const { page } = await searchParams
+  const { page, sort } = await searchParams
 
   const community = communityData[slug]
 
@@ -84,7 +90,15 @@ export default async function CategoryPage({
     notFound()
   }
 
-  const requestedPage = Number(page ?? '1')
+  const currentSort: SortType =
+    sort === 'top' ||
+    sort === 'replies'
+      ? sort
+      : 'latest'
+
+  const requestedPage = Number(
+    page ?? '1'
+  )
 
   const currentPage =
     Number.isInteger(requestedPage) &&
@@ -95,19 +109,50 @@ export default async function CategoryPage({
   const supabase = await createClient()
 
   /*
-   * Get the total number of threads
-   * in this category.
+   * TOP AND MOST REPLIES
+   *
+   * These filters only consider
+   * threads created during the
+   * last 7 days.
    */
-  const {
-    count: totalThreads,
-    error: countError,
-  } = await supabase
+
+  const sevenDaysAgo = new Date()
+
+  sevenDaysAgo.setDate(
+    sevenDaysAgo.getDate() - 7
+  )
+
+  /*
+   * Build the base query used for
+   * counting and fetching.
+   */
+
+  let countQuery = supabase
     .from('thread_stats')
     .select('*', {
       count: 'exact',
       head: true,
     })
     .eq('category_slug', slug)
+
+  if (currentSort === 'top') {
+    countQuery = countQuery.gte(
+      'created_at',
+      sevenDaysAgo.toISOString()
+    )
+  }
+
+  if (currentSort === 'replies') {
+    countQuery = countQuery.gte(
+      'created_at',
+      sevenDaysAgo.toISOString()
+    )
+  }
+
+  const {
+    count: totalThreads,
+    error: countError,
+  } = await countQuery
 
   if (countError) {
     console.error(
@@ -118,33 +163,18 @@ export default async function CategoryPage({
 
   const total = totalThreads ?? 0
 
-  /*
-   * Calculate how many pages are required.
-   *
-   * Example:
-   * 30 threads  = 1 page
-   * 31 threads  = 2 pages
-   * 60 threads  = 2 pages
-   * 61 threads  = 3 pages
-   */
   const totalPages = Math.max(
     1,
-    Math.ceil(total / THREADS_PER_PAGE)
+    Math.ceil(
+      total / THREADS_PER_PAGE
+    )
   )
 
-  /*
-   * Prevent invalid URLs such as:
-   *
-   * ?page=999
-   */
   const safePage = Math.min(
     currentPage,
     totalPages
   )
 
-  /*
-   * Calculate which rows Supabase should return.
-   */
   const from =
     (safePage - 1) *
     THREADS_PER_PAGE
@@ -155,23 +185,79 @@ export default async function CategoryPage({
     1
 
   /*
-   * Load only the 30 threads
-   * belonging to the current page.
+   * Load the actual threads.
    */
-  const {
-    data: threads,
-    error: threadsError,
-  } = await supabase
+
+  let threadQuery = supabase
     .from('thread_stats')
     .select('*')
     .eq('category_slug', slug)
-    .order('score', {
-      ascending: false,
-    })
-    .order('created_at', {
-      ascending: false,
-    })
-    .range(from, to)
+
+  /*
+   * TOP
+   *
+   * Highest score during the
+   * last 7 days.
+   */
+
+  if (currentSort === 'top') {
+    threadQuery = threadQuery
+      .gte(
+        'created_at',
+        sevenDaysAgo.toISOString()
+      )
+      .order('score', {
+        ascending: false,
+      })
+      .order('created_at', {
+        ascending: false,
+      })
+  }
+
+  /*
+   * MOST REPLIES
+   *
+   * Most comments during the
+   * last 7 days.
+   */
+
+  else if (currentSort === 'replies') {
+    threadQuery = threadQuery
+      .gte(
+        'created_at',
+        sevenDaysAgo.toISOString()
+      )
+      .order('comment_count', {
+        ascending: false,
+      })
+      .order('created_at', {
+        ascending: false,
+      })
+  }
+
+  /*
+   * LATEST
+   *
+   * Newest threads first.
+   */
+
+  else {
+    threadQuery = threadQuery
+      .order('created_at', {
+        ascending: false,
+      })
+      .order('score', {
+        ascending: false,
+      })
+  }
+
+  const {
+    data: threads,
+    error: threadsError,
+  } = await threadQuery.range(
+    from,
+    to
+  )
 
   if (threadsError) {
     console.error(
@@ -183,11 +269,9 @@ export default async function CategoryPage({
   const threadList = threads ?? []
 
   /*
-   * Create the page numbers shown
-   * in the pagination bar.
-   *
-   * We don't show 50 page numbers at once.
+   * Pagination numbers.
    */
+
   const pageNumbers: number[] = []
 
   const startPage = Math.max(
@@ -208,6 +292,44 @@ export default async function CategoryPage({
     pageNumbers.push(number)
   }
 
+  /*
+   * Build URLs while preserving
+   * the selected filter.
+   */
+
+  function pageUrl(
+    targetPage: number
+  ) {
+    if (currentSort === 'latest') {
+      return targetPage === 1
+        ? `/category/${slug}`
+        : `/category/${slug}?page=${targetPage}`
+    }
+
+    return `/category/${slug}?sort=${currentSort}&page=${targetPage}`
+  }
+
+  function sortUrl(
+    targetSort: SortType
+  ) {
+    if (targetSort === 'latest') {
+      return `/category/${slug}`
+    }
+
+    return `/category/${slug}?sort=${targetSort}`
+  }
+
+  const showingFrom =
+    total === 0
+      ? 0
+      : from + 1
+
+  const showingTo =
+    Math.min(
+      from + THREADS_PER_PAGE,
+      total
+    )
+
   return (
     <ForumShell activeSlug={slug}>
       <div className="mx-auto max-w-[1000px]">
@@ -225,39 +347,86 @@ export default async function CategoryPage({
         {/* SORT BAR */}
 
         <div className="flex items-center justify-between py-4">
+
           <div className="flex gap-2">
 
-            <button
-              type="button"
-              className="rounded-full bg-[#286ff1] px-5 py-2 text-[10px] font-bold text-white"
+            {/* LATEST */}
+
+            <Link
+              href={sortUrl('latest')}
+              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
+              style={{
+                background:
+                  currentSort === 'latest'
+                    ? '#286ff1'
+                    : 'var(--surface-secondary)',
+
+                color:
+                  currentSort === 'latest'
+                    ? '#ffffff'
+                    : 'var(--text-secondary)',
+              }}
             >
               Latest
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="rounded-full bg-[#eef2f7] px-5 py-2 text-[10px] font-medium text-[#657286] dark:bg-[#292929] dark:text-[#b8b8b8]"
+            {/* TOP */}
+
+            <Link
+              href={sortUrl('top')}
+              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
+              style={{
+                background:
+                  currentSort === 'top'
+                    ? '#286ff1'
+                    : 'var(--surface-secondary)',
+
+                color:
+                  currentSort === 'top'
+                    ? '#ffffff'
+                    : 'var(--text-secondary)',
+              }}
             >
               Top
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="rounded-full bg-[#eef2f7] px-5 py-2 text-[10px] font-medium text-[#657286] dark:bg-[#292929] dark:text-[#b8b8b8]"
+            {/* MOST REPLIES */}
+
+            <Link
+              href={sortUrl('replies')}
+              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
+              style={{
+                background:
+                  currentSort === 'replies'
+                    ? '#286ff1'
+                    : 'var(--surface-secondary)',
+
+                color:
+                  currentSort === 'replies'
+                    ? '#ffffff'
+                    : 'var(--text-secondary)',
+              }}
             >
               Most Replies
-            </button>
+            </Link>
 
           </div>
 
-          <span className="hidden text-[10px] text-[#98a2b1] dark:text-[#888] sm:block">
-            {total === 0
-              ? 'No threads'
-              : `Showing ${from + 1}-${Math.min(
-                  from + THREADS_PER_PAGE,
-                  total
-                )} of ${total} threads`}
+          <span
+            className="hidden text-[10px] sm:block"
+            style={{
+              color:
+                'var(--text-muted)',
+            }}
+          >
+            {currentSort === 'top'
+              ? 'Top threads this week'
+              : currentSort ===
+                  'replies'
+                ? 'Most replies this week'
+                : `Showing ${showingFrom}-${showingTo} of ${total} threads`}
           </span>
+
         </div>
 
         {/* THREAD LIST */}
@@ -265,27 +434,39 @@ export default async function CategoryPage({
         <div
           className="overflow-hidden rounded-[15px] border"
           style={{
-            background: 'var(--surface)',
-            borderColor: 'var(--border)',
+            background:
+              'var(--surface)',
+            borderColor:
+              'var(--border)',
           }}
         >
+
           {threadList.length > 0 ? (
-            threadList.map((thread) => (
-              <ThreadCard
-                key={thread.id}
-                thread={thread}
-              />
-            ))
+            threadList.map(
+              (thread) => (
+                <ThreadCard
+                  key={thread.id}
+                  thread={thread}
+                />
+              )
+            )
           ) : (
             <div
               className="px-6 py-12 text-center text-sm"
               style={{
-                color: 'var(--text-secondary)',
+                color:
+                  'var(--text-secondary)',
               }}
             >
-              No threads yet.
+              {currentSort === 'top'
+                ? 'No top threads from the last 7 days.'
+                : currentSort ===
+                    'replies'
+                  ? 'No threads with replies from the last 7 days.'
+                  : 'No threads yet.'}
             </div>
           )}
+
         </div>
 
         {/* PAGINATION */}
@@ -297,21 +478,32 @@ export default async function CategoryPage({
 
             {safePage > 1 ? (
               <Link
-                href={`/category/${slug}?page=${safePage - 1}`}
+                href={pageUrl(
+                  safePage - 1
+                )}
                 scroll={true}
-                className="rounded-lg border bg-white px-4 py-2 text-[10px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
+                className="rounded-lg border px-4 py-2 text-[10px] font-medium transition hover:opacity-80"
                 style={{
-                  borderColor: 'var(--border)',
+                  background:
+                    'var(--surface)',
+                  borderColor:
+                    'var(--border)',
+                  color:
+                    'var(--text-secondary)',
                 }}
               >
                 Previous
               </Link>
             ) : (
               <span
-                className="rounded-lg border bg-white px-4 py-2 text-[10px] text-[#9aa4b2] dark:bg-[#222] dark:text-[#777]"
+                className="rounded-lg border px-4 py-2 text-[10px] opacity-40"
                 style={{
-                  borderColor: 'var(--border)',
-                  opacity: 0.5,
+                  background:
+                    'var(--surface-secondary)',
+                  borderColor:
+                    'var(--border)',
+                  color:
+                    'var(--text-muted)',
                 }}
               >
                 Previous
@@ -322,63 +514,90 @@ export default async function CategoryPage({
 
             <div className="flex items-center gap-3">
 
-              {/* FIRST PAGE + ELLIPSIS */}
-
               {startPage > 1 && (
                 <>
                   <Link
-                    href={`/category/${slug}?page=1`}
+                    href={pageUrl(1)}
                     scroll={true}
-                    className="text-[10px] text-[#657286] transition hover:text-[#286ff1] dark:text-[#999]"
+                    className="text-[10px]"
+                    style={{
+                      color:
+                        'var(--text-secondary)',
+                    }}
                   >
                     1
                   </Link>
 
                   {startPage > 2 && (
-                    <span className="text-[10px] text-[#98a2b1]">
+                    <span
+                      className="text-[10px]"
+                      style={{
+                        color:
+                          'var(--text-muted)',
+                      }}
+                    >
                       ...
                     </span>
                   )}
                 </>
               )}
 
-              {/* CURRENT PAGE RANGE */}
+              {pageNumbers.map(
+                (number) => {
+                  const active =
+                    number === safePage
 
-              {pageNumbers.map((number) => {
-                const active =
-                  number === safePage
+                  return (
+                    <Link
+                      key={number}
+                      href={pageUrl(
+                        number
+                      )}
+                      scroll={true}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-bold"
+                      style={{
+                        background:
+                          active
+                            ? '#286ff1'
+                            : 'transparent',
 
-                return (
-                  <Link
-                    key={number}
-                    href={`/category/${slug}?page=${number}`}
-                    scroll={true}
-                    className={
-                      active
-                        ? 'flex h-7 w-7 items-center justify-center rounded-lg bg-[#286ff1] text-[10px] font-bold text-white'
-                        : 'text-[10px] text-[#657286] transition hover:text-[#286ff1] dark:text-[#999]'
-                    }
-                  >
-                    {number}
-                  </Link>
-                )
-              })}
-
-              {/* LAST PAGE + ELLIPSIS */}
+                        color:
+                          active
+                            ? '#ffffff'
+                            : 'var(--text-secondary)',
+                      }}
+                    >
+                      {number}
+                    </Link>
+                  )
+                }
+              )}
 
               {endPage < totalPages && (
                 <>
                   {endPage <
                     totalPages - 1 && (
-                    <span className="text-[10px] text-[#98a2b1]">
+                    <span
+                      className="text-[10px]"
+                      style={{
+                        color:
+                          'var(--text-muted)',
+                      }}
+                    >
                       ...
                     </span>
                   )}
 
                   <Link
-                    href={`/category/${slug}?page=${totalPages}`}
+                    href={pageUrl(
+                      totalPages
+                    )}
                     scroll={true}
-                    className="text-[10px] text-[#657286] transition hover:text-[#286ff1] dark:text-[#999]"
+                    className="text-[10px]"
+                    style={{
+                      color:
+                        'var(--text-secondary)',
+                    }}
                   >
                     {totalPages}
                   </Link>
@@ -391,21 +610,32 @@ export default async function CategoryPage({
 
             {safePage < totalPages ? (
               <Link
-                href={`/category/${slug}?page=${safePage + 1}`}
+                href={pageUrl(
+                  safePage + 1
+                )}
                 scroll={true}
-                className="rounded-lg border bg-white px-4 py-2 text-[10px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
+                className="rounded-lg border px-4 py-2 text-[10px] font-medium transition hover:opacity-80"
                 style={{
-                  borderColor: 'var(--border)',
+                  background:
+                    'var(--surface)',
+                  borderColor:
+                    'var(--border)',
+                  color:
+                    'var(--text-secondary)',
                 }}
               >
                 Next
               </Link>
             ) : (
               <span
-                className="rounded-lg border bg-white px-4 py-2 text-[10px] text-[#9aa4b2] dark:bg-[#222] dark:text-[#777]"
+                className="rounded-lg border px-4 py-2 text-[10px] opacity-40"
                 style={{
-                  borderColor: 'var(--border)',
-                  opacity: 0.5,
+                  background:
+                    'var(--surface-secondary)',
+                  borderColor:
+                    'var(--border)',
+                  color:
+                    'var(--text-muted)',
                 }}
               >
                 Next
@@ -415,20 +645,23 @@ export default async function CategoryPage({
           </div>
         )}
 
-        {/* MOBILE THREAD COUNT */}
+        {/* THREAD COUNT */}
 
         <div
-          className="pb-4 text-center text-[10px] sm:hidden"
+          className="pb-4 text-center text-[10px]"
           style={{
-            color: 'var(--text-muted)',
+            color:
+              'var(--text-muted)',
           }}
         >
           {total === 0
-            ? 'No threads'
-            : `Showing ${from + 1}-${Math.min(
-                from + THREADS_PER_PAGE,
-                total
-              )} of ${total}`}
+            ? 'No discussions'
+            : currentSort === 'top'
+              ? `Showing top threads from the last 7 days · ${showingFrom}-${showingTo} of ${total}`
+              : currentSort ===
+                  'replies'
+                ? `Showing most-replied threads from the last 7 days · ${showingFrom}-${showingTo} of ${total}`
+                : `Showing ${showingFrom}-${showingTo} of ${total} threads`}
         </div>
 
       </div>

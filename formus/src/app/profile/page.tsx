@@ -1,453 +1,720 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-export default async function ProfilePage() {
+import ForumShell from '@/components/forum/forum-shell'
+
+import { createClient } from '@/lib/supabase/server'
+
+type ProfilePageProps = {
+  searchParams: Promise<{
+    view?: string
+  }>
+}
+
+export default async function ProfilePage({
+  searchParams,
+}: ProfilePageProps) {
+  const { view } = await searchParams
+
+  const activeView =
+    view === 'comments' ||
+    view === 'rank'
+      ? view
+      : 'threads'
+
   const supabase = await createClient()
 
-  // Get currently logged-in user
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect the profile page
   if (!user) {
     redirect('/login?next=/profile')
   }
 
-  // Get profile + team/flair
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
-    .select(`
-      id,
-      username,
-      team_id,
-      created_at,
-      updated_at,
-      teams (
-        id,
-        name,
-        logo_url
-      )
-    `)
+    .select(
+      'id, username, avatar_url, team_id, reputation, post_count, last_seen_at, show_online_status'
+    )
     .eq('id', user.id)
     .single()
 
-  if (profileError) {
-    console.error('Profile fetch error:', profileError)
+  if (!profile) {
+    redirect('/login?next=/profile')
   }
 
-  // Get user's threads
-  const { data: threads, error: threadsError } = await supabase
-    .from('threads')
-    .select(`
-      id,
-      title,
-      content,
-      created_at,
-      category_id,
-      categories (
-        name,
-        slug
-      )
-    `)
-    .eq('author_id', user.id)
-    .order('created_at', { ascending: false })
+  let teamName: string | null = null
 
-  if (threadsError) {
-    console.error('Threads fetch error:', threadsError)
+  if (profile.team_id) {
+    const { data: team } = await supabase
+      .from('teams')
+      .select('name')
+      .eq('id', profile.team_id)
+      .single()
+
+    teamName = team?.name ?? null
   }
 
-  // Get user's comments
-  const { data: comments, error: commentsError } = await supabase
-    .from('comments')
-    .select(`
-      id,
-      content,
-      created_at,
-      thread_id,
-      threads (
-        id,
-        title
-      )
-    `)
-    .eq('author_id', user.id)
-    .order('created_at', { ascending: false })
+  const { data: teams } = await supabase
+    .from('teams')
+    .select('id, name')
+    .order('name', {
+      ascending: true,
+    })
 
-  if (commentsError) {
-    console.error('Comments fetch error:', commentsError)
-  }
-
-  // Get votes received on user's threads
-  const { data: userThreads } = await supabase
-    .from('threads')
-    .select('id')
-    .eq('author_id', user.id)
-
-  const threadIds = (userThreads ?? []).map(
-    (thread) => thread.id
-  )
-
-  let totalVotesReceived = 0
-
-  if (threadIds.length > 0) {
-    const { data: votes } = await supabase
-      .from('thread_votes')
-      .select('value')
-      .in('thread_id', threadIds)
-
-    totalVotesReceived = (votes ?? []).reduce(
-      (total, vote) => total + vote.value,
-      0
+  const { data: threads } = await supabase
+    .from('thread_stats')
+    .select(
+      'id, title, category_name, category_slug, created_at, score, comment_count'
     )
-  }
+    .eq('author_id', user.id)
+    .order('created_at', {
+      ascending: false,
+    })
+    .limit(30)
 
-  const totalThreads = threads?.length ?? 0
-  const totalComments = comments?.length ?? 0
+  const { data: comments } = await supabase
+    .from('comments')
+    .select(
+      'id, thread_id, content, created_at'
+    )
+    .eq('author_id', user.id)
+    .order('created_at', {
+      ascending: false,
+    })
+    .limit(30)
 
-  const username =
-    profile?.username ??
-    user.user_metadata?.user_name ??
-    user.email?.split('@')[0] ??
-    'User'
+  const lastSeen = profile.last_seen_at
+    ? new Date(
+        profile.last_seen_at
+      ).getTime()
+    : 0
 
-  const avatarUrl =
-    user.user_metadata?.avatar_url ??
-    user.user_metadata?.picture ??
-    null
-
-  const team = Array.isArray(profile?.teams)
-    ? profile.teams[0]
-    : profile?.teams
-
-  const joinDate = new Date(
-    profile?.created_at ?? user.created_at
-  ).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const isOnline =
+    profile.show_online_status &&
+    Date.now() - lastSeen <
+      5 * 60 * 1000
 
   return (
-    <main className="min-h-screen bg-[var(--page-background)]">
+    <ForumShell>
+      <div className="mx-auto max-w-[1100px]">
 
-      {/* TOP PROFILE HEADER */}
+        <div className="grid gap-5 md:grid-cols-[250px_minmax(0,1fr)]">
 
-      <section className="border-b border-[var(--border)] bg-[var(--surface)]">
+          {/* PROFILE SIDEBAR */}
 
-        <div className="mx-auto max-w-[1000px] px-5 py-8">
+          <aside
+            className="border"
+            style={{
+              background:
+                'var(--surface)',
+              borderColor:
+                'var(--border)',
+            }}
+          >
 
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            {/* PROFILE HEADER */}
 
-            {/* USER */}
+            <div
+              className="border-b px-5 py-6 text-center"
+              style={{
+                borderColor:
+                  'var(--border)',
+              }}
+            >
 
-            <div className="flex items-center gap-5">
+              <div className="relative mx-auto h-20 w-20">
 
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={username}
-                  className="h-20 w-20 rounded-full border border-[var(--border)] object-cover"
-                />
-              ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#286ff1] text-2xl font-bold text-white">
-                  {username.charAt(0).toUpperCase()}
+                {profile.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.username}
+                    className="h-20 w-20 rounded-full border object-cover"
+                    style={{
+                      borderColor:
+                        'var(--border)',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="flex h-20 w-20 items-center justify-center rounded-full border text-2xl font-bold"
+                    style={{
+                      background:
+                        'var(--accent-soft)',
+                      borderColor:
+                        'var(--border)',
+                      color:
+                        'var(--accent)',
+                    }}
+                  >
+                    {profile.username
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+
+                {isOnline && (
+                  <span
+                    className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2"
+                    style={{
+                      background:
+                        '#22c55e',
+                      borderColor:
+                        'var(--surface)',
+                    }}
+                  />
+                )}
+
+              </div>
+
+              <h1
+                className="mt-4 text-base font-bold"
+                style={{
+                  color:
+                    'var(--text-primary)',
+                }}
+              >
+                {profile.username}
+              </h1>
+
+              {teamName && (
+                <div
+                  className="mx-auto mt-2 inline-block border px-2 py-1 text-[9px] font-bold"
+                  style={{
+                    background:
+                      'var(--accent-soft)',
+                    borderColor:
+                      'var(--border)',
+                    color:
+                      'var(--accent)',
+                  }}
+                >
+                  {teamName}
                 </div>
               )}
 
-              <div>
+              {profile.show_online_status && (
+                <div
+                  className="mt-2 text-[10px]"
+                  style={{
+                    color: isOnline
+                      ? '#22c55e'
+                      : 'var(--text-muted)',
+                  }}
+                >
+                  {isOnline
+                    ? 'Online'
+                    : 'Offline'}
+                </div>
+              )}
 
-                <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-                  {username}
-                </h1>
+            </div>
 
-                <div className="mt-2 flex flex-wrap items-center gap-2">
+            {/* NAVIGATION */}
 
-                  {team?.name && (
-                    <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-semibold text-[#2869e8] dark:bg-[#26344a] dark:text-[#83aeff]">
-                      {team.name}
-                    </span>
-                  )}
+            <nav className="py-2">
 
-                  <span className="text-[11px] text-[var(--text-secondary)]">
-                    Joined {joinDate}
-                  </span>
+              <div
+                className="px-5 py-2 text-[9px] font-bold uppercase tracking-[0.15em]"
+                style={{
+                  color:
+                    'var(--text-muted)',
+                }}
+              >
+                Profile
+              </div>
 
+              <Link
+                href="/profile"
+                className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
+                style={{
+                  background:
+                    activeView === 'threads'
+                      ? 'var(--accent-soft)'
+                      : 'transparent',
+                  color:
+                    activeView === 'threads'
+                      ? 'var(--accent)'
+                      : 'var(--text-secondary)',
+                }}
+              >
+                <span>Threads</span>
+
+                <span className="text-[10px]">
+                  {profile.post_count ?? 0}
+                </span>
+              </Link>
+
+              <Link
+                href="/profile?view=comments"
+                className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
+                style={{
+                  background:
+                    activeView === 'comments'
+                      ? 'var(--accent-soft)'
+                      : 'transparent',
+                  color:
+                    activeView === 'comments'
+                      ? 'var(--accent)'
+                      : 'var(--text-secondary)',
+                }}
+              >
+                <span>Comments</span>
+
+                <span className="text-[10px]">
+                  {comments?.length ?? 0}
+                </span>
+              </Link>
+
+              <Link
+                href="/profile?view=rank"
+                className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
+                style={{
+                  background:
+                    activeView === 'rank'
+                      ? 'var(--accent-soft)'
+                      : 'transparent',
+                  color:
+                    activeView === 'rank'
+                      ? 'var(--accent)'
+                      : 'var(--text-secondary)',
+                }}
+              >
+                <span>Rank</span>
+
+                <span
+                  className="text-[10px]"
+                  style={{
+                    color:
+                      'var(--text-muted)',
+                  }}
+                >
+                  —
+                </span>
+              </Link>
+
+              <Link
+                href="/profile/edit"
+                className="block px-5 py-3 text-xs font-semibold"
+                style={{
+                  color:
+                    'var(--text-secondary)',
+                }}
+              >
+                Edit Profile
+              </Link>
+
+              <div
+                className="my-2 border-t"
+                style={{
+                  borderColor:
+                    'var(--border)',
+                }}
+              />
+
+              <Link
+                href="/settings"
+                className="block px-5 py-3 text-xs font-semibold"
+                style={{
+                  color:
+                    'var(--text-secondary)',
+                }}
+              >
+                Settings
+              </Link>
+
+            </nav>
+
+          </aside>
+
+          {/* MAIN */}
+
+          <main>
+
+            <div className="mb-5">
+
+              <h2
+                className="text-lg font-bold"
+                style={{
+                  color:
+                    'var(--text-primary)',
+                }}
+              >
+                {activeView === 'threads'
+                  ? 'Threads'
+                  : activeView === 'comments'
+                    ? 'Comments'
+                    : 'Rank'}
+              </h2>
+
+              <p
+                className="mt-1 text-xs"
+                style={{
+                  color:
+                    'var(--text-muted)',
+                }}
+              >
+                {activeView === 'threads'
+                  ? 'Threads you have created.'
+                  : activeView === 'comments'
+                    ? 'Comments you have posted.'
+                    : 'Your current SNYT ranking.'}
+              </p>
+
+            </div>
+
+            {/* STATS */}
+
+            <div
+              className="mb-5 grid grid-cols-3 border"
+              style={{
+                background:
+                  'var(--surface)',
+                borderColor:
+                  'var(--border)',
+              }}
+            >
+
+              <div
+                className="border-r px-4 py-4"
+                style={{
+                  borderColor:
+                    'var(--border)',
+                }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase"
+                  style={{
+                    color:
+                      'var(--text-muted)',
+                  }}
+                >
+                  Threads
+                </div>
+
+                <div
+                  className="mt-1 text-lg font-bold"
+                  style={{
+                    color:
+                      'var(--text-primary)',
+                  }}
+                >
+                  {profile.post_count ?? 0}
+                </div>
+              </div>
+
+              <div
+                className="border-r px-4 py-4"
+                style={{
+                  borderColor:
+                    'var(--border)',
+                }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase"
+                  style={{
+                    color:
+                      'var(--text-muted)',
+                  }}
+                >
+                  Reputation
+                </div>
+
+                <div
+                  className="mt-1 text-lg font-bold"
+                  style={{
+                    color:
+                      'var(--text-primary)',
+                  }}
+                >
+                  {profile.reputation ?? 0}
+                </div>
+              </div>
+
+              <div className="px-4 py-4">
+
+                <div
+                  className="text-[9px] font-bold uppercase"
+                  style={{
+                    color:
+                      'var(--text-muted)',
+                  }}
+                >
+                  Rank
+                </div>
+
+                <div
+                  className="mt-1 text-sm font-bold"
+                  style={{
+                    color:
+                      'var(--accent)',
+                  }}
+                >
+                  Unranked
                 </div>
 
               </div>
 
             </div>
 
-            {/* LOGOUT */}
+            {/* THREADS */}
 
-            <form action="/auth/signout" method="POST">
-
-              <button
-                type="submit"
-                className="rounded-lg border border-red-200 bg-white px-5 py-2.5 text-[11px] font-semibold text-red-500 transition hover:bg-red-50 dark:border-red-900 dark:bg-[#222] dark:hover:bg-[#2b1c1c]"
+            {activeView === 'threads' && (
+              <section
+                className="border"
+                style={{
+                  background:
+                    'var(--surface)',
+                  borderColor:
+                    'var(--border)',
+                }}
               >
-                Log out
-              </button>
 
-            </form>
+                {threads &&
+                threads.length > 0 ? (
+                  threads.map(
+                    (thread) => (
+                      <Link
+                        key={thread.id}
+                        href={`/thread/${thread.id}`}
+                        className="block border-b px-5 py-4 last:border-b-0"
+                        style={{
+                          borderColor:
+                            'var(--border)',
+                        }}
+                      >
 
-          </div>
+                        <div className="flex items-center justify-between gap-4">
 
-        </div>
+                          <div className="min-w-0">
 
-      </section>
+                            <div
+                              className="truncate text-sm font-semibold"
+                              style={{
+                                color:
+                                  'var(--text-primary)',
+                              }}
+                            >
+                              {thread.title}
+                            </div>
 
-      {/* PROFILE CONTENT */}
+                            <div className="mt-1 flex flex-wrap gap-2 text-[10px]">
 
-      <div className="mx-auto max-w-[1000px] px-5 py-6">
+                              <span
+                                style={{
+                                  color:
+                                    'var(--accent)',
+                                }}
+                              >
+                                {thread.category_name}
+                              </span>
 
-        {/* STATISTICS */}
+                              <span
+                                style={{
+                                  color:
+                                    'var(--text-muted)',
+                                }}
+                              >
+                                ·
+                              </span>
 
-        <div className="grid grid-cols-3 gap-3">
+                              <span
+                                style={{
+                                  color:
+                                    'var(--text-muted)',
+                                }}
+                              >
+                                {thread.comment_count ?? 0}{' '}
+                                comments
+                              </span>
 
-          <div
-            className="rounded-xl border p-4"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
-              Threads
-            </p>
+                              <span
+                                style={{
+                                  color:
+                                    'var(--text-muted)',
+                                }}
+                              >
+                                ·
+                              </span>
 
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">
-              {totalThreads}
-            </p>
-          </div>
+                              <span
+                                style={{
+                                  color:
+                                    'var(--text-muted)',
+                                }}
+                              >
+                                {thread.score ?? 0}{' '}
+                                score
+                              </span>
 
-          <div
-            className="rounded-xl border p-4"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
-              Comments
-            </p>
+                            </div>
 
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">
-              {totalComments}
-            </p>
-          </div>
+                          </div>
 
-          <div
-            className="rounded-xl border p-4"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
-              Votes Received
-            </p>
+                          <span
+                            style={{
+                              color:
+                                'var(--text-muted)',
+                            }}
+                          >
+                            →
+                          </span>
 
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">
-              {totalVotesReceived}
-            </p>
-          </div>
+                        </div>
 
-        </div>
-
-        {/* NAVIGATION */}
-
-        <div className="mt-8 border-b border-[var(--border)]">
-
-          <nav className="flex gap-6">
-
-            <Link
-              href="/profile"
-              className="border-b-2 border-[#286ff1] px-1 pb-3 text-[11px] font-semibold text-[#286ff1]"
-            >
-              Overview
-            </Link>
-
-            <Link
-              href="/profile?tab=threads"
-              className="px-1 pb-3 text-[11px] text-[var(--text-secondary)] hover:text-[#286ff1]"
-            >
-              Threads
-            </Link>
-
-            <Link
-              href="/profile?tab=comments"
-              className="px-1 pb-3 text-[11px] text-[var(--text-secondary)] hover:text-[#286ff1]"
-            >
-              Comments
-            </Link>
-
-          </nav>
-
-        </div>
-
-        {/* USER THREADS */}
-
-        <section className="mt-6">
-
-          <div className="mb-4 flex items-center justify-between">
-
-            <h2 className="text-sm font-bold text-[var(--text-primary)]">
-              Your Threads
-            </h2>
-
-            <Link
-              href="/new"
-              className="rounded-lg bg-[#286ff1] px-4 py-2 text-[10px] font-semibold text-white hover:bg-[#1e5fd6]"
-            >
-              + New Thread
-            </Link>
-
-          </div>
-
-          {totalThreads === 0 ? (
-
-            <div
-              className="rounded-xl border px-5 py-10 text-center text-sm"
-              style={{
-                background: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              You haven't created any threads yet.
-            </div>
-
-          ) : (
-
-            <div
-              className="overflow-hidden rounded-xl border"
-              style={{
-                background: 'var(--surface)',
-                borderColor: 'var(--border)',
-              }}
-            >
-
-              {threads?.map((thread) => {
-
-                const category = Array.isArray(thread.categories)
-                  ? thread.categories[0]
-                  : thread.categories
-
-                return (
-                  <Link
-                    key={thread.id}
-                    href={`/thread/${thread.id}`}
-                    className="block border-b border-[var(--border)] px-5 py-4 last:border-b-0 hover:bg-[var(--surface-secondary)]"
+                      </Link>
+                    )
+                  )
+                ) : (
+                  <div
+                    className="px-5 py-12 text-center text-sm"
+                    style={{
+                      color:
+                        'var(--text-muted)',
+                    }}
                   >
+                    You haven't created
+                    any threads yet.
+                  </div>
+                )}
 
-                    <div className="mb-1 flex items-center gap-2 text-[9px] text-[var(--text-secondary)]">
+              </section>
+            )}
 
-                      {category?.name && (
-                        <span className="rounded bg-[#eef4ff] px-2 py-1 text-[#2869e8] dark:bg-[#26344a] dark:text-[#83aeff]">
-                          {category.name}
-                        </span>
-                      )}
+            {/* COMMENTS */}
 
-                      <span>
-                        {new Date(
-                          thread.created_at
-                        ).toLocaleDateString('en-IN')}
-                      </span>
+            {activeView === 'comments' && (
+              <section
+                className="border"
+                style={{
+                  background:
+                    'var(--surface)',
+                  borderColor:
+                    'var(--border)',
+                }}
+              >
 
-                    </div>
+                {comments &&
+                comments.length > 0 ? (
+                  comments.map(
+                    (comment) => (
+                      <Link
+                        key={comment.id}
+                        href={`/thread/${comment.thread_id}#comment-${comment.id}`}
+                        className="block border-b px-5 py-4 transition hover:bg-[var(--surface-secondary)] last:border-b-0"
+                        style={{
+                          borderColor:
+                            'var(--border)',
+                        }}
+                      >
 
-                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-                      {thread.title}
-                    </h3>
+                        <div
+                          className="text-sm leading-6"
+                          style={{
+                            color:
+                              'var(--text-secondary)',
+                          }}
+                        >
+                          {comment.content}
+                        </div>
 
-                    <p className="mt-1 line-clamp-2 text-[11px] text-[var(--text-secondary)]">
-                      {thread.content}
-                    </p>
+                        <div className="mt-2 text-[10px]">
+                          <span
+                            style={{
+                              color:
+                                'var(--accent)',
+                            }}
+                          >
+                            Open thread
+                          </span>
 
-                  </Link>
-                )
-              })}
+                          <span
+                            className="mx-2"
+                            style={{
+                              color:
+                                'var(--text-muted)',
+                            }}
+                          >
+                            ·
+                          </span>
 
-            </div>
+                          <span
+                            style={{
+                              color:
+                                'var(--text-muted)',
+                            }}
+                          >
+                            {new Date(
+                              comment.created_at
+                            ).toLocaleString()}
+                          </span>
+                        </div>
 
-          )}
-
-        </section>
-
-        {/* COMMENTS */}
-
-        <section className="mt-8">
-
-          <h2 className="mb-4 text-sm font-bold text-[var(--text-primary)]">
-            Your Comments
-          </h2>
-
-          {totalComments === 0 ? (
-
-            <div
-              className="rounded-xl border px-5 py-10 text-center text-sm"
-              style={{
-                background: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              You haven't commented yet.
-            </div>
-
-          ) : (
-
-            <div
-              className="overflow-hidden rounded-xl border"
-              style={{
-                background: 'var(--surface)',
-                borderColor: 'var(--border)',
-              }}
-            >
-
-              {comments?.map((comment) => {
-
-                const thread = Array.isArray(comment.threads)
-                  ? comment.threads[0]
-                  : comment.threads
-
-                return (
-                  <Link
-                    key={comment.id}
-                    href={`/thread/${comment.thread_id}`}
-                    className="block border-b border-[var(--border)] px-5 py-4 last:border-b-0 hover:bg-[var(--surface-secondary)]"
+                      </Link>
+                    )
+                  )
+                ) : (
+                  <div
+                    className="px-5 py-12 text-center text-sm"
+                    style={{
+                      color:
+                        'var(--text-muted)',
+                    }}
                   >
+                    You haven't posted
+                    any comments yet.
+                  </div>
+                )}
 
-                    <p className="text-[11px] leading-relaxed text-[var(--text-primary)]">
-                      {comment.content}
-                    </p>
+              </section>
+            )}
 
-                    {thread?.title && (
-                      <p className="mt-2 text-[10px] font-semibold text-[#286ff1]">
-                        On: {thread.title}
-                      </p>
-                    )}
+            {/* RANK */}
 
-                    <p className="mt-1 text-[9px] text-[var(--text-secondary)]">
-                      {new Date(
-                        comment.created_at
-                      ).toLocaleDateString('en-IN')}
-                    </p>
+            {activeView === 'rank' && (
+              <section
+                className="border px-6 py-10 text-center"
+                style={{
+                  background:
+                    'var(--surface)',
+                  borderColor:
+                    'var(--border)',
+                }}
+              >
 
-                  </Link>
-                )
-              })}
+                <div
+                  className="text-2xl font-bold"
+                  style={{
+                    color:
+                      'var(--accent)',
+                  }}
+                >
+                  Unranked
+                </div>
 
-            </div>
+                <p
+                  className="mx-auto mt-2 max-w-md text-xs leading-5"
+                  style={{
+                    color:
+                      'var(--text-muted)',
+                  }}
+                >
+                  Ranking will be added
+                  later. Your reputation,
+                  activity, and community
+                  participation can be used
+                  when the ranking system is
+                  built.
+                </p>
 
-          )}
+              </section>
+            )}
 
-        </section>
+          </main>
 
+        </div>
       </div>
-
-    </main>
+    </ForumShell>
   )
 }
