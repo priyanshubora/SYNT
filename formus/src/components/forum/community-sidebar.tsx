@@ -64,6 +64,7 @@ export default async function CommunitySidebar({
             <Link
               key={community.slug}
               href={`/category/${community.slug}`}
+              prefetch={true}
               className={`group relative flex h-[39px] items-center justify-between px-4 text-[12px] transition ${
                 active
                   ? 'mx-1 my-1 rounded-[10px] border border-dashed border-[#74A662] bg-[#eef7ec] text-[#4a7a42] dark:bg-[#23392a] dark:text-[#bfe7c5]'

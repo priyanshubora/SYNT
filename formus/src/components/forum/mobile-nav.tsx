@@ -46,6 +46,7 @@ export default function MobileNav({
             <Link
               key={category.slug}
               href={`/category/${category.slug}`}
+              prefetch={true}
               className={`shrink-0 rounded-full border px-4 py-2 text-[11px] font-medium transition ${
                 active
                   ? 'border-[#6a9e59] bg-[#6a9e59] text-white shadow-sm'
