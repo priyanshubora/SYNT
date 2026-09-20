@@ -81,10 +81,10 @@ export default function ForumHeader() {
   }
 
   return (
-    <header className="forum-header h-[46px] border-b bg-black text-white">
-      <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-4">
+    <header className="forum-header h-[52px] border-b bg-black text-white sm:h-[56px]">
+      <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-3 sm:px-4">
         {/* LEFT */}
-        <div className="flex h-full items-center gap-8">
+        <div className="flex h-full items-center gap-3 sm:gap-8">
           <Link
             href="/"
             className="flex h-full items-center"
@@ -92,7 +92,7 @@ export default function ForumHeader() {
             <img
               src="/snytlogoheadbar.png"
               alt="SNYT"
-              className="h-[45px] w-auto object-contain"
+              className="h-[42px] w-auto object-contain sm:h-[45px] md:h-[48px]"
             />
           </Link>
 
