@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import ForumHeader from './forum-header'
 import CommunitySidebar from './community-sidebar'
 import MobileNav from './mobile-nav'
@@ -53,7 +55,9 @@ export default function ForumShell({
           </span>
 
           <div className="flex gap-5">
-            <span>Guidelines</span>
+            <Link href="/rules" className="transition hover:text-[#657286]">
+              Guidelines
+            </Link>
             <span>Privacy</span>
             <span>Support</span>
           </div>
