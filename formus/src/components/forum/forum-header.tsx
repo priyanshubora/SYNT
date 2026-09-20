@@ -13,10 +13,13 @@ export default function ForumHeader() {
   const [username, setUsername] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
+  const isHomeActive = pathname === '/'
   const isForumsActive =
     pathname?.startsWith('/category') ||
     pathname?.startsWith('/thread') ||
     pathname?.startsWith('/new')
+  const isRulesActive = pathname === '/rules'
+  const isAboutActive = pathname === '/about'
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('snyt-theme')
@@ -96,9 +99,15 @@ export default function ForumHeader() {
           <nav className="flex h-full items-center gap-6 text-[12px] font-medium">
             <Link
               href="/"
-              className="flex h-full items-center opacity-80 hover:opacity-100"
+              className={`relative flex h-full items-center transition-opacity ${
+                isHomeActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              }`}
             >
               Home
+
+              {isHomeActive ? (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+              ) : null}
             </Link>
 
             <Link
@@ -116,16 +125,28 @@ export default function ForumHeader() {
 
             <Link
               href="/rules"
-              className="flex h-full items-center opacity-80 hover:opacity-100"
+              className={`relative flex h-full items-center transition-opacity ${
+                isRulesActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              }`}
             >
               Rules
+
+              {isRulesActive ? (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+              ) : null}
             </Link>
 
             <Link
               href="/about"
-              className="flex h-full items-center opacity-80 hover:opacity-100"
+              className={`relative flex h-full items-center transition-opacity ${
+                isAboutActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              }`}
             >
               About
+
+              {isAboutActive ? (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+              ) : null}
             </Link>
           </nav>
         </div>
