@@ -361,7 +361,7 @@ export default async function AboutPage() {
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/login"
-              className="rounded-lg bg-[#286ff1] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#1e5fd6]"
+              className="rounded-lg bg-[#74A662] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#669a56]"
             >
               Join Formus
             </Link>

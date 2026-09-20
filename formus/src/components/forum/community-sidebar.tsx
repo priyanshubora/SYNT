@@ -66,7 +66,7 @@ export default async function CommunitySidebar({
               href={`/category/${community.slug}`}
               className={`group relative flex h-[39px] items-center justify-between px-4 text-[12px] transition ${
                 active
-                  ? 'mx-1 my-1 rounded-[10px] border border-dashed border-[#73a7ff] bg-[#f7faff] text-[#2869e8] dark:bg-[#26344a] dark:text-[#83aeff]'
+                  ? 'mx-1 my-1 rounded-[10px] border border-dashed border-[#74A662] bg-[#eef7ec] text-[#4a7a42] dark:bg-[#23392a] dark:text-[#bfe7c5]'
                   : 'text-[#667085] hover:bg-[#f7f9fc] dark:text-[#a1a1aa] dark:hover:bg-[#292929]'
               }`}
             >
@@ -74,7 +74,7 @@ export default async function CommunitySidebar({
                 <span
                   className={`h-[6px] w-[6px] shrink-0 rounded-full ${
                     active
-                      ? 'bg-[#3478f6]'
+                      ? 'bg-[#74A662]'
                       : 'bg-[#ccd3dc] dark:bg-[#666]'
                   }`}
                 />
@@ -87,7 +87,7 @@ export default async function CommunitySidebar({
               <span
                 className={`ml-2 text-[10px] ${
                   active
-                    ? 'rounded-full bg-[#edf4ff] px-2 py-1 text-[#2869e8] dark:bg-[#31496c] dark:text-[#9bbcff]'
+                    ? 'rounded-full bg-[#dfeedb] px-2 py-1 text-[#4a7a42] dark:bg-[#2d4a35] dark:text-[#cfeec8]'
                     : 'text-[#a1aaba] dark:text-[#777]'
                 }`}
               >

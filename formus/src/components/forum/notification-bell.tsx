@@ -289,7 +289,7 @@ export default function NotificationBell() {
         🔔
 
         {unreadCount > 0 && (
-          <span className="absolute right-0 top-0 flex min-w-[15px] translate-x-[2px] -translate-y-[2px] items-center justify-center bg-[#286ff1] px-1 text-[8px] font-bold leading-[15px] text-white">
+          <span className="absolute right-0 top-0 flex min-w-[15px] translate-x-[2px] -translate-y-[2px] items-center justify-center bg-[#74A662] px-1 text-[8px] font-bold leading-[15px] text-white">
             {unreadCount > 99
               ? '99+'
               : unreadCount}

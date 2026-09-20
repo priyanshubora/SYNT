@@ -106,7 +106,7 @@ export default function ForumHeader() {
               Home
 
               {isHomeActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
               ) : null}
             </Link>
 
@@ -119,7 +119,7 @@ export default function ForumHeader() {
               Forums
 
               {isForumsActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
               ) : null}
             </Link>
 
@@ -132,7 +132,7 @@ export default function ForumHeader() {
               Rules
 
               {isRulesActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
               ) : null}
             </Link>
 
@@ -145,7 +145,7 @@ export default function ForumHeader() {
               About
 
               {isAboutActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
               ) : null}
             </Link>
           </nav>

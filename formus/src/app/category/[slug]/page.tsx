@@ -409,7 +409,7 @@ export default async function CategoryPage({
               style={{
                 background:
                   currentSort === 'latest'
-                    ? '#286ff1'
+                    ? '#74A662'
                     : 'var(--surface-secondary)',
 
                 color:
@@ -429,7 +429,7 @@ export default async function CategoryPage({
               style={{
                 background:
                   currentSort === 'top'
-                    ? '#286ff1'
+                    ? '#74A662'
                     : 'var(--surface-secondary)',
 
                 color:
@@ -449,7 +449,7 @@ export default async function CategoryPage({
               style={{
                 background:
                   currentSort === 'replies'
-                    ? '#286ff1'
+                    ? '#74A662'
                     : 'var(--surface-secondary)',
 
                 color:
