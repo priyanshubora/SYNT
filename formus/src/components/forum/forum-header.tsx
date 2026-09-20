@@ -92,7 +92,7 @@ export default function ForumHeader() {
             <img
               src="/snytlogoheadbar.png"
               alt="SNYT"
-              className="h-[30px] w-auto object-contain"
+              className="h-[45px] w-auto object-contain"
             />
           </Link>
 

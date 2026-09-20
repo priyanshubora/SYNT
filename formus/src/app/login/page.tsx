@@ -53,16 +53,16 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f9fc] px-5 dark:bg-[#1A1A1A]">
       <div className="w-full max-w-[420px]">
         {/* BRAND */}
-        <div className="mb-8 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-black text-white shadow-lg">
-              <span className="text-[18px] font-black tracking-tight">
-                S
-              </span>
-            </div>
+        <div className="mb-7 text-center">
+          <div className="mb-3 flex justify-center">
+            <img
+              src="/snytlogoheadbar.png"
+              alt="SNYT logo"
+              className="h-14 w-auto object-contain drop-shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
+            />
           </div>
 
-          <h1 className="text-[24px] font-bold tracking-tight text-[#172033] dark:text-white">
+          <h1 className="text-[22px] font-bold tracking-tight text-[#172033] dark:text-white">
             Welcome to SNYT
           </h1>
 
