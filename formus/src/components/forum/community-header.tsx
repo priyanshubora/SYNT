@@ -84,11 +84,6 @@ export default function CommunityHeader({
         </div>
 
         <div className="flex flex-col items-end gap-2">
-
-          <div className="hidden text-[9px] text-[#9aa4b3] sm:block">
-            Led by <span className="font-semibold text-[#657084]">{leader}</span>
-          </div>
-
           <Link
             href={`/new?category=${slug}`}
             className="flex items-center gap-2 rounded-full bg-[#286ff1] px-5 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#1e5fd6]"
@@ -96,7 +91,6 @@ export default function CommunityHeader({
             <span className="text-[15px] leading-none">+</span>
             New Thread
           </Link>
-
         </div>
 
       </div>

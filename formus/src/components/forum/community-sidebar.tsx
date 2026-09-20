@@ -98,13 +98,6 @@ export default async function CommunitySidebar({
         })}
       </div>
 
-      <Link
-        href="/communities"
-        className="mt-4 flex items-center gap-2 px-2 text-[11px] font-medium text-[#64748b] hover:text-[#2869e8] dark:text-[#999] dark:hover:text-[#83aeff]"
-      >
-        <span className="text-[16px]">+</span>
-        Browse all communities
-      </Link>
     </aside>
   )
 }
