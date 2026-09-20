@@ -3,50 +3,68 @@
 import { useState } from 'react'
 
 type ShareButtonProps = {
-  url?: string
-  label?: string
+  title?: string
 }
 
 export default function ShareButton({
-  url,
-  label = 'Share',
+  title = 'SNYT discussion',
 }: ShareButtonProps) {
-  const [copied, setCopied] = useState(false)
+  const [status, setStatus] = useState('')
 
-  async function handleShare() {
-    const shareUrl =
-      url ?? window.location.href
+  async function shareThread() {
+    const url = window.location.href
 
     try {
-      if (navigator.share) {
+      if (
+        typeof navigator.share === 'function'
+      ) {
         await navigator.share({
-          url: shareUrl,
+          title,
+          url,
         })
+
+        setStatus('Shared')
+      } else {
+        await navigator.clipboard.writeText(url)
+        setStatus('Copied')
+      }
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === 'AbortError'
+      ) {
         return
       }
 
-      await navigator.clipboard.writeText(shareUrl)
+      try {
+        await navigator.clipboard.writeText(url)
+        setStatus('Copied')
+      } catch (copyError) {
+        console.error(
+          'Thread share failed:',
+          error,
+          copyError
+        )
 
-      setCopied(true)
-
-      setTimeout(() => {
-        setCopied(false)
-      }, 1500)
-    } catch (error) {
-      console.error('Share failed:', error)
+        setStatus('Unable to share')
+      }
     }
+
+    window.setTimeout(() => {
+      setStatus('')
+    }, 1800)
   }
 
   return (
     <button
       type="button"
-      onClick={handleShare}
-      className="font-semibold transition hover:underline"
+      onClick={shareThread}
+      className="text-[10px] font-semibold transition hover:opacity-70"
       style={{
-        color: 'var(--text-secondary)',
+        color: 'var(--text-muted)',
       }}
     >
-      {copied ? 'Copied!' : label}
+      {status || 'Share'}
     </button>
   )
 }

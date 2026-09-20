@@ -127,6 +127,7 @@ export default async function HomePage({
       category_slug,
       author_username,
       team_name,
+      team_logo_url,
       score,
       vote_count,
       comment_count

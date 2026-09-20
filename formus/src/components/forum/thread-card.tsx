@@ -9,6 +9,7 @@ type ThreadCardProps = {
     category_slug?: string | null
     author_username?: string | null
     team_name?: string | null
+    team_logo_url?: string | null
     created_at: string
     score?: number | null
     comment_count?: number | null
@@ -17,7 +18,7 @@ type ThreadCardProps = {
 
 function timeAgo(date: string) {
   const seconds = Math.floor(
-    (Date.now() - new Date(date).getTime()) / 1000
+    (Date.now() - new Date(date).getTime()) / 1000,
   )
 
   if (seconds < 60) {
@@ -50,10 +51,8 @@ export default function ThreadCard({
       className="thread-card group block border-b px-4 py-4 transition sm:px-5"
     >
       <div className="flex gap-4">
-
         {/* VOTE COLUMN */}
         <div className="flex w-[38px] shrink-0 flex-col items-center pt-1">
-
           <span className="text-[13px] text-[#7b8798] transition group-hover:text-[#286ff1]">
             △
           </span>
@@ -65,15 +64,12 @@ export default function ThreadCard({
           <span className="mt-0.5 text-[7px] uppercase tracking-wide text-[#a3adba] dark:text-[#777]">
             votes
           </span>
-
         </div>
 
         {/* THREAD CONTENT */}
         <div className="min-w-0 flex-1">
-
           {/* META */}
           <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[9px] text-[#9aa4b2] dark:text-[#888]">
-
             {thread.category_name && (
               <span className="rounded-[3px] bg-[#eef4ff] px-2 py-1 font-semibold text-[#4c76c4] dark:bg-[#26344a] dark:text-[#83aeff]">
                 {thread.category_name}
@@ -82,17 +78,33 @@ export default function ThreadCard({
 
             <span>•</span>
 
-            <span>
-              Posted by{' '}
-              <span className="font-semibold text-[#526175] dark:text-[#c5cbd4]">
+            <span className="inline-flex flex-wrap items-center gap-1">
+              <span>
+                Posted by{' '}
+              </span>
+
+              <span className="inline-flex items-center gap-1 font-semibold text-[#526175] dark:text-[#c5cbd4]">
                 {thread.author_username ?? 'user'}
+
+                {thread.team_logo_url && (
+                  <img
+                    src={thread.team_logo_url}
+                    alt=""
+                    className="h-4 w-4 object-contain"
+                  />
+                )}
+
+                {thread.team_name && (
+                  <span className="text-[8px] font-medium text-[#7b8798] dark:text-[#888]">
+                    {thread.team_name}
+                  </span>
+                )}
               </span>
             </span>
 
             <span>
               {timeAgo(thread.created_at)}
             </span>
-
           </div>
 
           {/* TITLE */}
@@ -107,7 +119,6 @@ export default function ThreadCard({
 
           {/* BOTTOM META */}
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[9px] text-[#788497] dark:text-[#888]">
-
             <span>
               ◉ {thread.comment_count ?? 0} replies
             </span>
@@ -119,11 +130,8 @@ export default function ThreadCard({
             <span>
               Last active recently
             </span>
-
           </div>
-
         </div>
-
       </div>
     </Link>
   )

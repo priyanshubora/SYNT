@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+
+import { createClient } from '@/lib/supabase/client'
 
 type VoteButtonsProps = {
   threadId: string
@@ -33,9 +34,9 @@ export default function VoteButtons({
     } = await supabase.auth.getUser()
 
     if (!user) {
-      window.location.href =
-        `/login?next=${encodeURIComponent(window.location.pathname)}`
-
+      window.location.href = `/login?next=${encodeURIComponent(
+        window.location.pathname,
+      )}`
       return
     }
 
@@ -57,11 +58,9 @@ export default function VoteButtons({
 
       setScore((current) => current - value)
       setUserVote(null)
-
       setLoading(false)
 
       router.refresh()
-
       return
     }
 
@@ -80,7 +79,7 @@ export default function VoteButtons({
         },
         {
           onConflict: 'thread_id,user_id',
-        }
+        },
       )
 
     if (error) {
@@ -93,27 +92,25 @@ export default function VoteButtons({
       setScore((current) => current + value)
     } else {
       setScore(
-        (current) => current + value - previousVote
+        (current) => current + value - previousVote,
       )
     }
 
     setUserVote(value)
-
     setLoading(false)
 
     router.refresh()
   }
 
   return (
-    <div className="flex items-center gap-1">
-
-      {/* UP */}
+    <div className="flex w-[38px] flex-col items-center">
+      {/* UPVOTE */}
       <button
         type="button"
         disabled={loading}
         onClick={() => handleVote(1)}
         aria-label="Upvote thread"
-        className={`flex h-8 w-8 items-center justify-center text-[20px] transition ${
+        className={`flex h-7 w-7 items-center justify-center text-[17px] font-semibold leading-none transition ${
           userVote === 1
             ? 'bg-[#e8f1ff] text-[#286ff1]'
             : 'text-[#788497] hover:bg-[#eef2f7] hover:text-[#286ff1] dark:hover:bg-[#303030]'
@@ -124,7 +121,7 @@ export default function VoteButtons({
 
       {/* SCORE */}
       <span
-        className={`min-w-[30px] text-center text-[12px] font-bold ${
+        className={`py-1 text-[11px] font-bold leading-none ${
           score > 0
             ? 'text-[#286ff1]'
             : score < 0
@@ -135,13 +132,13 @@ export default function VoteButtons({
         {score}
       </span>
 
-      {/* DOWN */}
+      {/* DOWNVOTE */}
       <button
         type="button"
         disabled={loading}
         onClick={() => handleVote(-1)}
         aria-label="Downvote thread"
-        className={`flex h-8 w-8 items-center justify-center text-[20px] transition ${
+        className={`flex h-7 w-7 items-center justify-center text-[17px] font-semibold leading-none transition ${
           userVote === -1
             ? 'bg-[#fff0f0] text-[#ef4444]'
             : 'text-[#788497] hover:bg-[#fff4f4] hover:text-[#ef4444] dark:hover:bg-[#303030]'

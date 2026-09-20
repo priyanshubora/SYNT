@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
 import EditProfileForm from '@/components/forum/edit-profile-form'
-
 import { createClient } from '@/lib/supabase/server'
 
 export default async function EditProfilePage() {
@@ -18,9 +17,7 @@ export default async function EditProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select(
-      'username, avatar_url, team_id'
-    )
+    .select('username, avatar_url, team_id')
     .eq('id', user.id)
     .single()
 
@@ -28,24 +25,26 @@ export default async function EditProfilePage() {
     redirect('/profile')
   }
 
-  const { data: teams } = await supabase
+  const { data: teams, error: teamsError } = await supabase
     .from('teams')
-    .select('id, name, logo_url')
+    .select('id, name, logo_url, region')
+    .in('region', ['indian', 'international'])
     .order('name', {
       ascending: true,
     })
 
+  if (teamsError) {
+    console.error('Failed to load teams:', teamsError)
+  }
+
   return (
     <ForumShell>
       <div className="mx-auto max-w-[800px]">
-
         <div className="mb-5">
-
           <h1
             className="text-xl font-bold"
             style={{
-              color:
-                'var(--text-primary)',
+              color: 'var(--text-primary)',
             }}
           >
             Edit Profile
@@ -54,14 +53,11 @@ export default async function EditProfilePage() {
           <p
             className="mt-1 text-xs"
             style={{
-              color:
-                'var(--text-muted)',
+              color: 'var(--text-muted)',
             }}
           >
-            Change your SNYT profile
-            information.
+            Change your SNYT profile information.
           </p>
-
         </div>
 
         <EditProfileForm
@@ -70,7 +66,6 @@ export default async function EditProfilePage() {
           currentTeamId={profile.team_id}
           teams={teams ?? []}
         />
-
       </div>
     </ForumShell>
   )

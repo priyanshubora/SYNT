@@ -1,27 +1,26 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-type Team = {
-  id: string
-  name: string
-  category_id: string
-}
+import { createClient } from '@/lib/supabase/client'
+import TeamPicker, {
+  type TeamPickerTeam,
+} from '@/components/forum/team-picker'
 
 export default function SetupProfilePage() {
   const router = useRouter()
 
   const [username, setUsername] = useState('')
-  const [teams, setTeams] = useState<Team[]>([])
-  const [teamId, setTeamId] = useState('')
+  const [teams, setTeams] = useState<TeamPickerTeam[]>([])
+  const [teamId, setTeamId] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const loadTeams = async () => {
+    async function loadProfileSetup() {
       const supabase = createClient()
 
       const {
@@ -35,7 +34,8 @@ export default function SetupProfilePage() {
 
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name, category_id')
+        .select('id, name, logo_url, region')
+        .in('region', ['indian', 'international'])
         .order('name')
 
       if (error) {
@@ -44,19 +44,27 @@ export default function SetupProfilePage() {
         return
       }
 
-      setTeams(data ?? [])
+      setTeams((data ?? []) as TeamPickerTeam[])
       setLoading(false)
     }
 
-    loadTeams()
+    loadProfileSetup()
   }, [router])
 
-  const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault()
 
     setError('')
+
+    const cleanUsername = username.trim()
+
+    if (cleanUsername.length < 3) {
+      setError('Username must be at least 3 characters.')
+      return
+    }
+
     setSaving(true)
 
     const supabase = createClient()
@@ -74,7 +82,7 @@ export default function SetupProfilePage() {
       .from('profiles')
       .insert({
         id: user.id,
-        username: username.trim(),
+        username: cleanUsername,
         team_id: teamId || null,
       })
 
@@ -89,67 +97,85 @@ export default function SetupProfilePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        Loading...
+      <main
+        className="flex min-h-screen items-center justify-center"
+        style={{
+          background: 'var(--page-background)',
+          color: 'var(--text-primary)',
+        }}
+      >
+        <div className="text-[13px] text-secondary-theme">
+          Loading...
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
+    <main
+      className="flex min-h-screen items-center justify-center px-4 py-10"
+      style={{
+        background: 'var(--page-background)',
+        color: 'var(--text-primary)',
+      }}
+    >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl border border-neutral-800 p-8"
+        className="w-full max-w-[520px] border p-6 sm:p-8"
+        style={{
+          background: 'var(--surface)',
+          borderColor: 'var(--border)',
+        }}
       >
-        <h1 className="text-3xl font-bold">
-          Create your FORMUS profile
-        </h1>
+        <div className="mb-7">
+          <h1 className="text-[22px] font-bold text-primary-theme">
+            Create your SNYT profile
+          </h1>
 
-        <p className="mt-2 text-neutral-400">
-          Choose your username and team flair.
-        </p>
+          <p className="mt-1.5 text-[12px] text-secondary-theme">
+            Choose your username and team.
+          </p>
+        </div>
 
-        <label className="mt-8 block text-sm">
+        <label
+          htmlFor="username"
+          className="block text-[12px] font-semibold text-primary-theme"
+        >
           Username
         </label>
 
         <input
+          id="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(event) => setUsername(event.target.value)}
           minLength={3}
           maxLength={30}
           required
-          className="mt-2 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 outline-none"
           placeholder="Enter username"
+          className="mt-2 h-10 w-full border bg-[var(--surface-secondary)] px-3 text-[12px] text-primary-theme outline-none placeholder:text-muted-theme focus:border-[var(--accent)]"
+          style={{
+            borderColor: 'var(--border)',
+          }}
         />
 
-        <label className="mt-6 block text-sm">
-          Team flair
-        </label>
-
-        <select
-          value={teamId}
-          onChange={(e) => setTeamId(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3"
-        >
-          <option value="">No team selected</option>
-
-          {teams.map((team) => (
-            <option key={team.id} value={team.id}>
-              {team.name}
-            </option>
-          ))}
-        </select>
+        <div className="mt-7">
+          <TeamPicker
+            teams={teams}
+            value={teamId}
+            onChange={setTeamId}
+          />
+        </div>
 
         {error && (
-          <p className="mt-4 text-sm text-red-400">
+          <div className="mt-5 border border-red-300 bg-red-50 px-3 py-2.5 text-[12px] text-red-600">
             {error}
-          </p>
+          </div>
         )}
 
         <button
+          type="submit"
           disabled={saving}
-          className="mt-8 w-full rounded-lg bg-white px-4 py-3 font-semibold text-black disabled:opacity-50"
+          className="mt-7 h-10 w-full bg-[var(--accent)] px-4 text-[12px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? 'Creating profile...' : 'Complete Profile'}
         </button>

@@ -18,9 +18,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select(
-      'username, avatar_url, show_online_status'
-    )
+    .select('username, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -31,13 +29,11 @@ export default async function SettingsPage() {
   return (
     <ForumShell>
       <div className="mx-auto max-w-[800px]">
-
         <div className="mb-5">
           <h1
             className="text-xl font-bold"
             style={{
-              color:
-                'var(--text-primary)',
+              color: 'var(--text-primary)',
             }}
           >
             Settings
@@ -46,23 +42,18 @@ export default async function SettingsPage() {
           <p
             className="mt-1 text-xs"
             style={{
-              color:
-                'var(--text-muted)',
+              color: 'var(--text-muted)',
             }}
           >
             Manage your SNYT profile and
-            privacy settings.
+            account settings.
           </p>
         </div>
 
         <SettingsForm
           username={profile.username}
           avatarUrl={profile.avatar_url}
-          showOnlineStatus={
-            profile.show_online_status
-          }
         />
-
       </div>
     </ForumShell>
   )

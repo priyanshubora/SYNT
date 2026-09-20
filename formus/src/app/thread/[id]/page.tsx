@@ -18,7 +18,43 @@ type ThreadPageProps = {
 
   searchParams: Promise<{
     commentsPage?: string
+    commentId?: string
   }>
+}
+
+type RawComment = {
+  id: string
+  thread_id: string
+  author_id: string
+  parent_id: string | null
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+function getRootCommentId(
+  commentId: string,
+  commentsById: Map<string, RawComment>,
+) {
+  const visited = new Set<string>()
+
+  let currentId = commentId
+
+  while (true) {
+    if (visited.has(currentId)) {
+      return commentId
+    }
+
+    visited.add(currentId)
+
+    const current = commentsById.get(currentId)
+
+    if (!current || !current.parent_id) {
+      return current?.id ?? commentId
+    }
+
+    currentId = current.parent_id
+  }
 }
 
 export default async function ThreadPage({
@@ -26,7 +62,11 @@ export default async function ThreadPage({
   searchParams,
 }: ThreadPageProps) {
   const { id } = await params
-  const { commentsPage } = await searchParams
+
+  const {
+    commentsPage,
+    commentId,
+  } = await searchParams
 
   const supabase = await createClient()
 
@@ -34,34 +74,26 @@ export default async function ThreadPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data: thread, error: threadError } =
-    await supabase
-      .from('thread_stats')
-      .select('*')
-      .eq('id', id)
-      .single()
+  /*
+   * THREAD
+   */
+
+  const {
+    data: thread,
+    error: threadError,
+  } = await supabase
+    .from('thread_stats')
+    .select('*')
+    .eq('id', id)
+    .single()
 
   if (threadError || !thread) {
     notFound()
   }
 
-  const { data: author } = await supabase
-    .from('profiles')
-    .select('id, username, avatar_url, team_id')
-    .eq('id', thread.author_id)
-    .single()
-
-  let authorTeamName: string | null = null
-
-  if (author?.team_id) {
-    const { data: team } = await supabase
-      .from('teams')
-      .select('name')
-      .eq('id', author.team_id)
-      .single()
-
-    authorTeamName = team?.name ?? null
-  }
+  /*
+   * THREAD VOTE
+   */
 
   let userVote: number | null = null
 
@@ -77,52 +109,134 @@ export default async function ThreadPage({
   }
 
   /*
-   * COMMENT PAGINATION
+   * LOAD ALL COMMENTS
+   *
+   * We load the comment tree first and
+   * paginate only top-level comments.
+   *
+   * This prevents a reply from being
+   * separated from its parent by pagination.
    */
 
-  const requestedCommentsPage = Number(
-    commentsPage ?? '1'
-  )
+  const {
+    data: allComments,
+    error: commentsError,
+  } = await supabase
+    .from('comments')
+    .select(
+      `
+        id,
+        thread_id,
+        author_id,
+        parent_id,
+        content,
+        created_at,
+        updated_at
+      `,
+    )
+    .eq('thread_id', id)
+    .order('created_at', {
+      ascending: true,
+    })
 
-  const currentCommentsPage =
-    Number.isInteger(requestedCommentsPage) &&
+  if (commentsError) {
+    console.error(
+      'Comments loading error:',
+      commentsError,
+    )
+  }
+
+  const rawComments: RawComment[] =
+    allComments ?? []
+
+  const totalCommentCount =
+    rawComments.length
+
+  /*
+   * COMMENT TREE LOOKUP
+   */
+
+  const commentsById =
+    new Map<string, RawComment>()
+
+  for (const comment of rawComments) {
+    commentsById.set(
+      comment.id,
+      comment,
+    )
+  }
+
+  /*
+   * TOP LEVEL COMMENTS
+   */
+
+  const rootComments =
+    rawComments.filter(
+      (comment) =>
+        !comment.parent_id ||
+        !commentsById.has(
+          comment.parent_id,
+        ),
+    )
+
+  const requestedCommentsPage =
+    Number(commentsPage ?? '1')
+
+  let currentCommentsPage =
+    Number.isInteger(
+      requestedCommentsPage,
+    ) &&
     requestedCommentsPage > 0
       ? requestedCommentsPage
       : 1
 
-  const {
-    count: totalComments,
-    error: commentCountError,
-  } = await supabase
-    .from('comments')
-    .select('*', {
-      count: 'exact',
-      head: true,
-    })
-    .eq('thread_id', id)
+  /*
+   * If a shared comment ID was provided,
+   * automatically calculate the page
+   * containing its root comment.
+   */
 
-  if (commentCountError) {
-    console.error(
-      'Comment count error:',
-      commentCountError
-    )
+  if (commentId) {
+    const targetComment =
+      commentsById.get(commentId)
+
+    if (targetComment) {
+      const rootId =
+        getRootCommentId(
+          targetComment.id,
+          commentsById,
+        )
+
+      const rootIndex =
+        rootComments.findIndex(
+          (comment) =>
+            comment.id === rootId,
+        )
+
+      if (rootIndex >= 0) {
+        currentCommentsPage =
+          Math.floor(
+            rootIndex /
+              COMMENTS_PER_PAGE,
+          ) + 1
+      }
+    }
   }
 
-  const totalCommentCount =
-    totalComments ?? 0
-
-  const totalCommentPages = Math.max(
-    1,
-    Math.ceil(
-      totalCommentCount /
-        COMMENTS_PER_PAGE
+  const totalCommentPages =
+    Math.max(
+      1,
+      Math.ceil(
+        rootComments.length /
+          COMMENTS_PER_PAGE,
+      ),
     )
-  )
 
-  const safeCommentsPage = Math.min(
-    currentCommentsPage,
-    totalCommentPages
-  )
+  const safeCommentsPage =
+    Math.min(
+      currentCommentsPage,
+      totalCommentPages,
+    )
 
   const commentFrom =
     (safeCommentsPage - 1) *
@@ -130,35 +244,49 @@ export default async function ThreadPage({
 
   const commentTo =
     commentFrom +
-    COMMENTS_PER_PAGE -
-    1
+    COMMENTS_PER_PAGE
 
-  const { data: comments, error: commentsError } =
-    await supabase
-      .from('comments')
-      .select(
-        'id, thread_id, author_id, content, created_at'
-      )
-      .eq('thread_id', id)
-      .order('created_at', {
-        ascending: true,
-      })
-      .range(commentFrom, commentTo)
-
-  if (commentsError) {
-    console.error(
-      'Comments loading error:',
-      commentsError
+  const visibleRootComments =
+    rootComments.slice(
+      commentFrom,
+      commentTo,
     )
-  }
 
-  const commentList = comments ?? []
+  const visibleRootIds =
+    new Set(
+      visibleRootComments.map(
+        (comment) => comment.id,
+      ),
+    )
+
+  /*
+   * INCLUDE EVERY DESCENDANT OF THE
+   * VISIBLE ROOT COMMENTS.
+   */
+
+  const visibleComments =
+    rawComments.filter((comment) => {
+      const rootId =
+        getRootCommentId(
+          comment.id,
+          commentsById,
+        )
+
+      return visibleRootIds.has(
+        rootId,
+      )
+    })
+
+  /*
+   * COMMENT AUTHORS
+   */
 
   const authorIds = [
     ...new Set(
-      commentList.map(
-        (comment) => comment.author_id
-      )
+      visibleComments.map(
+        (comment) =>
+          comment.author_id,
+      ),
     ),
   ]
 
@@ -168,17 +296,29 @@ export default async function ThreadPage({
           await supabase
             .from('profiles')
             .select(
-              'id, username, avatar_url, team_id'
+              'id, username, avatar_url, team_id',
             )
             .in('id', authorIds)
         ).data ?? []
       : []
 
+  /*
+   * COMMENT TEAMS
+   */
+
   const teamIds = [
     ...new Set(
       commentProfiles
-        .map((profile) => profile.team_id)
-        .filter(Boolean)
+        .map(
+          (profile) =>
+            profile.team_id,
+        )
+        .filter(
+          (
+            teamId,
+          ): teamId is string =>
+            Boolean(teamId),
+        ),
     ),
   ]
 
@@ -187,14 +327,24 @@ export default async function ThreadPage({
       ? (
           await supabase
             .from('teams')
-            .select('id, name')
-            .in('id', teamIds)
+            .select(
+              'id, name, logo_url',
+            )
+            .in(
+              'id',
+              teamIds,
+            )
         ).data ?? []
       : []
 
-  const commentIds = commentList.map(
-    (comment) => comment.id
-  )
+  /*
+   * COMMENT VOTES
+   */
+
+  const commentIds =
+    visibleComments.map(
+      (comment) => comment.id,
+    )
 
   const commentVotes =
     commentIds.length > 0
@@ -202,105 +352,153 @@ export default async function ThreadPage({
           await supabase
             .from('comment_votes')
             .select(
-              'comment_id, user_id, value'
+              'comment_id, user_id, value',
             )
-            .in('comment_id', commentIds)
+            .in(
+              'comment_id',
+              commentIds,
+            )
         ).data ?? []
       : []
 
-  const commentData = commentList.map(
-    (comment) => {
-      const profile =
-        commentProfiles.find(
-          (item) =>
-            item.id === comment.author_id
-        )
+  /*
+   * BUILD CLIENT COMMENT DATA
+   */
 
-      const team = profile?.team_id
-        ? teams.find(
+  const commentData =
+    visibleComments.map(
+      (comment) => {
+        const profile =
+          commentProfiles.find(
             (item) =>
-              item.id === profile.team_id
+              item.id ===
+              comment.author_id,
           )
-        : null
 
-      const votesForComment =
-        commentVotes.filter(
-          (vote) =>
-            vote.comment_id === comment.id
-        )
+        const team =
+          profile?.team_id
+            ? teams.find(
+                (item) =>
+                  item.id ===
+                  profile.team_id,
+              )
+            : null
 
-      const score =
-        votesForComment.reduce(
-          (total, vote) =>
-            total + vote.value,
-          0
-        )
-
-      const currentUserVote = user
-        ? votesForComment.find(
+        const votesForComment =
+          commentVotes.filter(
             (vote) =>
-              vote.user_id === user.id
-          )?.value ?? null
-        : null
+              vote.comment_id ===
+              comment.id,
+          )
 
-      return {
-        id: comment.id,
-        thread_id: comment.thread_id,
-        author_id: comment.author_id,
-        content: comment.content,
-        created_at: comment.created_at,
-        author_username:
-          profile?.username ??
-          'User',
-        author_avatar_url:
-          profile?.avatar_url ??
-          null,
-        team_name:
-          team?.name ?? null,
-        score,
-        userVote:
-          currentUserVote,
-      }
-    }
-  )
+        const score =
+          votesForComment.reduce(
+            (total, vote) =>
+              total + vote.value,
+            0,
+          )
+
+        const currentUserVote =
+          user
+            ? votesForComment.find(
+                (vote) =>
+                  vote.user_id ===
+                  user.id,
+              )?.value ?? null
+            : null
+
+        return {
+          id: comment.id,
+          thread_id:
+            comment.thread_id,
+          author_id:
+            comment.author_id,
+          parent_id:
+            comment.parent_id,
+          content:
+            comment.content,
+          created_at:
+            comment.created_at,
+          updated_at:
+            comment.updated_at,
+          author_username:
+            profile?.username ??
+            'User',
+          author_avatar_url:
+            profile?.avatar_url ??
+            null,
+          team_name:
+            team?.name ?? null,
+          team_logo_url:
+            team?.logo_url ?? null,
+          score,
+          userVote:
+            currentUserVote,
+        }
+      },
+    )
 
   const categoryName =
     thread.category_name ??
     'Discussion'
 
+  const authorUsername =
+    thread.author_username ??
+    'User'
+
+  const authorTeamName =
+    thread.team_name ?? null
+
+  const authorTeamLogoUrl =
+    thread.team_logo_url ?? null
+
   return (
     <ForumShell
-      activeSlug={thread.category_slug}
+      activeSlug={
+        thread.category_slug
+      }
     >
       <div className="mx-auto max-w-[1000px]">
+
+        {/* BACK LINK */}
 
         <div className="mb-4">
           <Link
             href={`/category/${thread.category_slug}`}
             className="text-xs font-semibold transition hover:underline"
             style={{
-              color: 'var(--text-secondary)',
+              color:
+                'var(--text-secondary)',
             }}
           >
             ← Back to {categoryName}
           </Link>
         </div>
 
+        {/* THREAD */}
+
         <article
           className="border"
           style={{
-            background: 'var(--surface)',
-            borderColor: 'var(--border)',
+            background:
+              'var(--surface)',
+            borderColor:
+              'var(--border)',
           }}
         >
+
+          {/* THREAD HEADER */}
+
           <div
             className="border-b px-5 py-5 sm:px-6"
             style={{
-              borderColor: 'var(--border)',
+              borderColor:
+                'var(--border)',
             }}
           >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            {/* CATEGORY + TIME */}
 
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <Link
                 href={`/category/${thread.category_slug}`}
                 className="border px-2 py-1 text-[10px] font-bold uppercase"
@@ -324,7 +522,7 @@ export default async function ThreadPage({
                 }}
               >
                 {new Date(
-                  thread.created_at
+                  thread.created_at,
                 ).toLocaleString()}
               </span>
 
@@ -342,6 +540,8 @@ export default async function ThreadPage({
               )}
             </div>
 
+            {/* TITLE */}
+
             <h1
               className="text-2xl font-bold leading-tight sm:text-3xl"
               style={{
@@ -352,125 +552,110 @@ export default async function ThreadPage({
               {thread.title}
             </h1>
 
-            <div className="mt-4 flex items-center gap-3">
+            {/* AUTHOR */}
 
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border text-xs font-bold"
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span
+                className="text-sm font-bold"
                 style={{
-                  background:
-                    'var(--accent-soft)',
-                  borderColor:
-                    'var(--border)',
                   color:
-                    'var(--accent)',
+                    'var(--text-primary)',
                 }}
               >
-                {author?.avatar_url ? (
-                  <img
-                    src={author.avatar_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  (
-                    author?.username ??
-                    thread.author_username ??
-                    'U'
-                  )
-                    .slice(0, 1)
-                    .toUpperCase()
-                )}
-              </div>
+                {authorUsername}
+              </span>
 
-              <div>
-                <div className="flex items-center gap-2">
-
-                  <span
-                    className="text-sm font-bold"
-                    style={{
-                      color:
-                        'var(--text-primary)',
-                    }}
-                  >
-                    {author?.username ??
-                      thread.author_username ??
-                      'User'}
-                  </span>
-
-                  {authorTeamName && (
-                    <span
-                      className="border px-1.5 py-0.5 text-[9px] font-bold"
-                      style={{
-                        background:
-                          'var(--accent-soft)',
-                        borderColor:
-                          'var(--border)',
-                        color:
-                          'var(--accent)',
-                      }}
-                    >
-                      {authorTeamName}
-                    </span>
-                  )}
-
-                </div>
-
+              {authorTeamName && (
                 <span
-                  className="text-[10px]"
+                  className="inline-flex items-center gap-1.5 border px-1.5 py-0.5 text-[9px] font-bold"
                   style={{
+                    background:
+                      'var(--accent-soft)',
+                    borderColor:
+                      'var(--border)',
                     color:
-                      'var(--text-muted)',
+                      'var(--accent)',
                   }}
                 >
-                  Thread author
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 py-6 sm:px-6">
-
-            <div className="flex gap-5">
-
-              <div className="shrink-0">
-                <VoteButtons
-                  threadId={thread.id}
-                  initialScore={Number(
-                    thread.score ?? 0
+                  {authorTeamLogoUrl && (
+                    <img
+                      src={
+                        authorTeamLogoUrl
+                      }
+                      alt=""
+                      className="h-4 w-4 object-contain"
+                    />
                   )}
-                  initialUserVote={
-                    userVote
-                  }
-                />
-              </div>
 
-              <div className="min-w-0 flex-1">
-
-                <div
-                  className="whitespace-pre-wrap text-sm leading-7 sm:text-[15px]"
-                  style={{
-                    color:
-                      'var(--text-secondary)',
-                  }}
-                >
-                  {thread.content}
-                </div>
-
-                <ThreadActions
-                  threadId={thread.id}
-                  authorId={
-                    thread.author_id
-                  }
-                  currentUserId={
-                    user?.id ?? null
-                  }
-                  title={thread.title}
-                  content={thread.content}
-                />
-
-              </div>
+                  <span>
+                    {authorTeamName}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
+
+          {/* THREAD CONTENT */}
+
+          <div
+            className="grid grid-cols-[minmax(0,1fr)_52px]"
+          >
+            {/* POST CONTENT */}
+
+            <div className="min-w-0 px-5 py-6 sm:px-6">
+              <div
+                className="whitespace-pre-wrap text-sm leading-7 sm:text-[15px]"
+                style={{
+                  color:
+                    'var(--text-secondary)',
+                }}
+              >
+                {thread.content}
+              </div>
+
+              <ThreadActions
+                threadId={
+                  thread.id
+                }
+                authorId={
+                  thread.author_id
+                }
+                currentUserId={
+                  user?.id ?? null
+                }
+                title={
+                  thread.title
+                }
+                content={
+                  thread.content
+                }
+              />
+            </div>
+
+            {/* VOTE RAIL */}
+
+            <div
+              className="flex justify-center border-l px-1 pt-5 sm:px-2"
+              style={{
+                borderColor:
+                  'var(--border)',
+              }}
+            >
+              <VoteButtons
+                threadId={
+                  thread.id
+                }
+                initialScore={Number(
+                  thread.score ?? 0,
+                )}
+                initialUserVote={
+                  userVote
+                }
+              />
+            </div>
+          </div>
+
+          {/* THREAD META */}
 
           <div
             className="border-t px-5 py-3 sm:px-6"
@@ -481,16 +666,15 @@ export default async function ThreadPage({
                 'var(--border)',
             }}
           >
-
             <div className="flex flex-wrap items-center gap-4 text-[10px]">
-
               <span
                 style={{
                   color:
                     'var(--text-muted)',
                 }}
               >
-                {totalCommentCount} comments
+                {totalCommentCount}{' '}
+                comments
               </span>
 
               <span
@@ -500,16 +684,22 @@ export default async function ThreadPage({
                 }}
               >
                 {Number(
-                  thread.vote_count ?? 0
+                  thread.vote_count ??
+                    0,
                 )}{' '}
                 votes
               </span>
 
-              <ShareButton />
-
+              <ShareButton
+                title={
+                  thread.title
+                }
+              />
             </div>
           </div>
         </article>
+
+        {/* COMMENTS */}
 
         <CommentSection
           threadId={thread.id}
@@ -526,8 +716,10 @@ export default async function ThreadPage({
           totalPages={
             totalCommentPages
           }
+          highlightedCommentId={
+            commentId ?? null
+          }
         />
-
       </div>
     </ForumShell>
   )
