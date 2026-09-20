@@ -3,6 +3,26 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+function getSiteUrl() {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin
+  }
+
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}`
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL.replace(/\/$/, '')}`
+  }
+
+  return 'http://localhost:3000'
+}
+
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
 
@@ -17,7 +37,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(
           next
         )}`,
       },
