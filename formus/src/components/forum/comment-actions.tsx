@@ -23,6 +23,7 @@ export default function CommentActions({
   const [editContent, setEditContent] = useState(content)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState('')
 
   if (!currentUserId || currentUserId !== authorId) {
@@ -65,16 +66,9 @@ export default function CommentActions({
   }
 
   async function deleteComment() {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this comment?'
-    )
-
-    if (!confirmed) {
-      return
-    }
-
     setDeleting(true)
     setError('')
+    setConfirmingDelete(false)
 
     const supabase = createClient()
 
@@ -155,33 +149,72 @@ export default function CommentActions({
   }
 
   return (
-    <div className="mt-2 flex items-center gap-3">
-      <button
-        type="button"
-        onClick={() => {
-          setEditing(true)
-          setError('')
-        }}
-        className="text-xs font-semibold hover:underline"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        Edit
-      </button>
-
-      <button
-        type="button"
-        onClick={deleteComment}
-        disabled={deleting}
-        className="text-xs font-semibold text-red-500 hover:underline"
-      >
-        {deleting ? 'Deleting...' : 'Delete'}
-      </button>
-
-      {error && (
-        <span className="text-xs text-red-500">
-          {error}
-        </span>
+    <div className="mt-2">
+      {confirmingDelete && (
+        <div className="mb-2 rounded border border-red-200 bg-red-50 p-2.5 dark:border-red-900/60 dark:bg-red-950/20">
+          <p className="text-[10px] font-bold text-red-600 dark:text-red-300">
+            Delete this comment?
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={deleteComment}
+              disabled={deleting}
+              className="border border-red-500 bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white disabled:opacity-60"
+            >
+              {deleting ? 'Deleting...' : 'Yes, delete'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmingDelete(false)
+                setError('')
+              }}
+              disabled={deleting}
+              className="border px-2.5 py-1 text-[10px] font-bold"
+              style={{
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+                borderColor: 'var(--border)',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setEditing(true)
+            setError('')
+          }}
+          className="text-xs font-semibold hover:underline"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Edit
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setConfirmingDelete(true)
+            setError('')
+          }}
+          disabled={deleting}
+          className="text-xs font-semibold text-red-500 hover:underline disabled:opacity-60"
+        >
+          Delete
+        </button>
+
+        {error && (
+          <span className="text-xs text-red-500">
+            {error}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

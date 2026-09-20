@@ -7,7 +7,7 @@ import ThreadCard from '@/components/forum/thread-card'
 
 import { createClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 const communityMeta: Record<
   string,

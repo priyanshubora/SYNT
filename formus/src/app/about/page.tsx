@@ -4,7 +4,7 @@ import Link from 'next/link'
 import ForumShell from '@/components/forum/forum-shell'
 import { createClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 120
 
 export const metadata: Metadata = {
   title: 'About — FORMUS',

@@ -26,6 +26,7 @@ export default function ThreadActions({
   const [editContent, setEditContent] = useState(content)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState('')
 
   if (!currentUserId || currentUserId !== authorId) {
@@ -77,16 +78,9 @@ export default function ThreadActions({
   }
 
   async function deleteThread() {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this thread? This cannot be undone.'
-    )
-
-    if (!confirmed) {
-      return
-    }
-
     setDeleting(true)
     setError('')
+    setConfirmingDelete(false)
 
     const supabase = createClient()
 
@@ -206,33 +200,77 @@ export default function ThreadActions({
   }
 
   return (
-    <div className="mt-4 flex items-center gap-4">
-      <button
-        type="button"
-        onClick={() => {
-          setEditing(true)
-          setError('')
-        }}
-        className="text-xs font-semibold transition hover:underline"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        Edit
-      </button>
-
-      <button
-        type="button"
-        onClick={deleteThread}
-        disabled={deleting}
-        className="text-xs font-semibold text-red-500 transition hover:underline"
-      >
-        {deleting ? 'Deleting...' : 'Delete'}
-      </button>
-
-      {error && (
-        <span className="text-xs text-red-500">
-          {error}
-        </span>
+    <div className="mt-4">
+      {confirmingDelete && (
+        <div
+          className="mb-3 rounded border border-red-200 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/20"
+        >
+          <p className="text-xs font-bold text-red-600 dark:text-red-300">
+            Delete this discussion?
+          </p>
+          <p className="mt-1 text-[10px] text-red-500">
+            This action cannot be undone.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={deleteThread}
+              disabled={deleting}
+              className="border border-red-500 bg-red-500 px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-60"
+            >
+              {deleting ? 'Deleting...' : 'Yes, delete'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmingDelete(false)
+                setError('')
+              }}
+              disabled={deleting}
+              className="border px-3 py-1.5 text-[10px] font-bold"
+              style={{
+                background: 'var(--surface)',
+                color: 'var(--text-secondary)',
+                borderColor: 'var(--border)',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            setEditing(true)
+            setError('')
+          }}
+          className="text-xs font-semibold transition hover:underline"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Edit
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setConfirmingDelete(true)
+            setError('')
+          }}
+          disabled={deleting}
+          className="text-xs font-semibold text-red-500 transition hover:underline disabled:opacity-60"
+        >
+          Delete
+        </button>
+
+        {error && (
+          <span className="text-xs text-red-500">
+            {error}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
