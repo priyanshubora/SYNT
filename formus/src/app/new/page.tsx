@@ -18,9 +18,17 @@ export default async function NewThreadPage({
 
   const supabase = await createClient()
 
+  const [userResult, categoriesResult] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from('categories')
+      .select('id, name, slug')
+      .order('name'),
+  ])
+
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = userResult
 
   if (!user) {
     const next = categoryParam
@@ -40,10 +48,7 @@ export default async function NewThreadPage({
     redirect('/setup-profile?next=/new')
   }
 
-  const { data: categories, error } = await supabase
-    .from('categories')
-    .select('id, name, slug')
-    .order('name')
+  const { data: categories, error } = categoriesResult
 
   if (error || !categories) {
     return (

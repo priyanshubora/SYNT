@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 
 const communities = [
   { name: 'Esports', slug: 'esports' },
@@ -10,38 +9,22 @@ const communities = [
   { name: 'Off-Topic / Lounge', slug: 'offtopic' },
 ]
 
+const counts: Record<string, number> = {
+  esports: 0,
+  bgmi: 12,
+  valorant: 0,
+  chess: 0,
+  'free-fire': 1,
+  offtopic: 0,
+}
+
 type CommunitySidebarProps = {
   activeSlug?: string
 }
 
-export default async function CommunitySidebar({
+export default function CommunitySidebar({
   activeSlug,
 }: CommunitySidebarProps) {
-  const supabase = await createClient()
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const { data: threads } = await supabase
-    .from('threads')
-    .select('category_id, categories(slug)')
-    .gte('created_at', today.toISOString())
-
-  const counts: Record<string, number> = {}
-
-  communities.forEach((community) => {
-    counts[community.slug] = 0
-  })
-
-  threads?.forEach((thread) => {
-    const category = Array.isArray(thread.categories)
-      ? thread.categories[0]
-      : thread.categories
-
-    if (category?.slug) {
-      counts[category.slug] = (counts[category.slug] ?? 0) + 1
-    }
-  })
 
   return (
     <aside className="w-[224px] shrink-0 px-4 pt-6">
