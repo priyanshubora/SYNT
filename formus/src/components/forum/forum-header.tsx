@@ -1,15 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import NotificationBell from '@/components/forum/notification-bell'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ForumHeader() {
+  const pathname = usePathname()
   const [darkMode, setDarkMode] = useState(false)
   const [username, setUsername] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  const isForumsActive =
+    pathname?.startsWith('/category') ||
+    pathname?.startsWith('/thread') ||
+    pathname?.startsWith('/new')
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('snyt-theme')
@@ -96,11 +103,15 @@ export default function ForumHeader() {
 
             <Link
               href="/category/offtopic"
-              className="relative flex h-full items-center opacity-80 hover:opacity-100"
+              className={`relative flex h-full items-center transition-opacity ${
+                isForumsActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              }`}
             >
               Forums
 
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+              {isForumsActive ? (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2877ff]" />
+              ) : null}
             </Link>
 
             <Link
