@@ -29,6 +29,7 @@ export default function NewThreadForm({
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [isPreview, setIsPreview] = useState(false)
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -178,20 +179,32 @@ export default function NewThreadForm({
 
           <button
             type="button"
-            className="rounded-[6px] border border-[#de6161] bg-[#d14d4d] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-[#c44343]"
+            onClick={() => setIsPreview((current) => !current)}
+            className="rounded-[6px] border border-[#74A662] bg-[#74A662] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-[#669a56]"
           >
-            Preview
+            {isPreview ? 'Edit' : 'Preview'}
           </button>
         </div>
 
-        <textarea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          required
-          rows={16}
-          placeholder=""
-          className="w-full resize-none rounded-b-[10px] border border-[#4b545d] bg-[#b8c0c8] px-4 py-3 text-[15px] leading-6 text-[#1b232a] outline-none focus:border-[#b4c6d9]"
-        />
+        {isPreview ? (
+          <div className="w-full rounded-b-[10px] border border-[#4b545d] bg-[#b8c0c8] px-4 py-4 text-[15px] leading-7 text-[#1b232a]">
+            <div className="mb-3 text-[20px] font-bold text-[#1b232a]">
+              {title.trim() || 'Your thread title'}
+            </div>
+            <div className="whitespace-pre-wrap break-words">
+              {content.trim() || 'Your preview will appear here as you type.'}
+            </div>
+          </div>
+        ) : (
+          <textarea
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            required
+            rows={16}
+            placeholder=""
+            className="w-full resize-none rounded-b-[10px] border border-[#4b545d] bg-[#b8c0c8] px-4 py-3 text-[15px] leading-6 text-[#1b232a] outline-none focus:border-[#b4c6d9]"
+          />
+        )}
       </div>
 
       {error && (
@@ -203,7 +216,7 @@ export default function NewThreadForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-[8px] border border-[#d75e5e] bg-[#d75e5e] px-5 py-3 text-[15px] font-bold text-white transition hover:bg-[#c35555] disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-[8px] border border-[#74A662] bg-[#74A662] px-5 py-3 text-[15px] font-bold text-white transition hover:bg-[#669a56] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? 'Publishing...' : 'Submit Thread'}
       </button>
