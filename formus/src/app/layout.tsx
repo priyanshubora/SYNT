@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FORMUS — Esports Community",
+  title: "Snyt",
   description:
     "Discussions for esports, gaming and everything in between. Built by SNYT Esports.",
 };
