@@ -81,7 +81,7 @@ export default function ForumHeader() {
   }
 
   return (
-    <header className="forum-header h-[52px] border-b bg-black text-white sm:h-[56px]">
+    <header className="forum-header h-[52px] bg-black text-white sm:h-[56px]">
       <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-3 sm:px-4">
         {/* LEFT */}
         <div className="flex h-full items-center gap-3 sm:gap-8">
@@ -99,6 +99,7 @@ export default function ForumHeader() {
           <nav className="flex h-full items-center gap-6 text-[12px] font-medium">
             <Link
               href="/"
+              prefetch={true}
               className={`relative flex h-full items-center transition-opacity ${
                 isHomeActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
               }`}
@@ -112,6 +113,7 @@ export default function ForumHeader() {
 
             <Link
               href="/category/offtopic"
+              prefetch={true}
               className={`relative flex h-full items-center transition-opacity ${
                 isForumsActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
               }`}
@@ -125,6 +127,7 @@ export default function ForumHeader() {
 
             <Link
               href="/rules"
+              prefetch={true}
               className={`relative flex h-full items-center transition-opacity ${
                 isRulesActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
               }`}
@@ -138,6 +141,7 @@ export default function ForumHeader() {
 
             <Link
               href="/about"
+              prefetch={true}
               className={`relative flex h-full items-center transition-opacity ${
                 isAboutActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
               }`}

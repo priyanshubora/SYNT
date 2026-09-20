@@ -75,7 +75,7 @@ button {
 .forum-header {
   background: #000000 !important;
   color: #c8dbf0 !important;
-  border-color: #202020 !important;
+  border-color: transparent !important;
 }
 
 /* =========================================
