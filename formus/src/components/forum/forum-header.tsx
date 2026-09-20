@@ -69,7 +69,7 @@ export default function ForumHeader() {
   }
 
   return (
-    <header className="forum-header h-[46px] border-b">
+    <header className="h-[46px] border-b border-[#202020] bg-black text-white">
       <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-4">
 
         {/* LEFT */}
@@ -78,18 +78,13 @@ export default function ForumHeader() {
 
           <Link
             href="/"
-            className="flex items-center gap-2 text-[14px] font-bold tracking-tight"
+            className="flex h-full items-center"
           >
-            <span className="text-[20px]">
-              ≡
-            </span>
-
-            <span>
-              SNYT{' '}
-              <span className="opacity-70">
-                ESP.
-              </span>
-            </span>
+            <img
+              src="/snytlogoheadbar.png"
+              alt="SNYT"
+              className="h-[30px] w-auto object-contain"
+            />
           </Link>
 
           <nav className="flex h-full items-center gap-6 text-[12px] font-medium">
@@ -125,7 +120,6 @@ export default function ForumHeader() {
             </Link>
 
           </nav>
-
         </div>
 
         {/* RIGHT */}
@@ -148,26 +142,12 @@ export default function ForumHeader() {
             {darkMode ? '☀' : '☾'}
           </button>
 
-          {/* NOTIFICATION */}
-
-          <button
-            type="button"
-            className="relative opacity-70 hover:opacity-100"
-          >
-            ♧
-
-            <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#286cff] px-1 text-[8px] text-white">
-              0
-            </span>
-          </button>
-
           {/* PROFILE */}
 
           <Link
             href="/profile"
             className="flex items-center gap-2"
           >
-
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -187,11 +167,9 @@ export default function ForumHeader() {
             <span className="text-[10px] opacity-50">
               ▼
             </span>
-
           </Link>
 
         </div>
-
       </div>
     </header>
   )

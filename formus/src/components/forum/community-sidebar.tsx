@@ -1,48 +1,50 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 const communities = [
-  {
-    name: 'BGMI',
-    slug: 'bgmi',
-    count: '1.2k',
-  },
-  {
-    name: 'Valorant (VLR)',
-    slug: 'valorant',
-    count: '850',
-  },
-  {
-  name: 'Esports',
-  slug: 'esports',
-  count: '420',
-},
-  {
-    name: 'Chess',
-    slug: 'chess',
-    count: '110',
-  },
-  {
-    name: 'Free Fire',
-    slug: 'free-fire',
-    count: '275',
-  },
-  {
-    name: 'Off-Topic / Lounge',
-    slug: 'offtopic',
-    count: '315',
-  },
+  { name: 'Esports', slug: 'esports' },
+  { name: 'BGMI', slug: 'bgmi' },
+  { name: 'Valorant', slug: 'valorant' },
+  { name: 'Chess', slug: 'chess' },
+  { name: 'Free Fire', slug: 'free-fire' },
+  { name: 'Off-Topic / Lounge', slug: 'offtopic' },
 ]
 
 type CommunitySidebarProps = {
   activeSlug?: string
 }
 
-export default function CommunitySidebar({
+export default async function CommunitySidebar({
   activeSlug,
 }: CommunitySidebarProps) {
+  const supabase = await createClient()
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const { data: threads } = await supabase
+    .from('threads')
+    .select('category_id, categories(slug)')
+    .gte('created_at', today.toISOString())
+
+  const counts: Record<string, number> = {}
+
+  communities.forEach((community) => {
+    counts[community.slug] = 0
+  })
+
+  threads?.forEach((thread) => {
+    const category = Array.isArray(thread.categories)
+      ? thread.categories[0]
+      : thread.categories
+
+    if (category?.slug) {
+      counts[category.slug] = (counts[category.slug] ?? 0) + 1
+    }
+  })
+
   return (
     <aside className="w-[224px] shrink-0 px-4 pt-6">
-
       <div className="mb-3 px-2 text-[10px] font-bold uppercase tracking-wide text-[#8792a3] dark:text-[#8f8f8f]">
         Communities
       </div>
@@ -54,9 +56,9 @@ export default function CommunitySidebar({
           borderColor: 'var(--border)',
         }}
       >
-
         {communities.map((community) => {
           const active = community.slug === activeSlug
+          const count = counts[community.slug] ?? 0
 
           return (
             <Link
@@ -68,9 +70,7 @@ export default function CommunitySidebar({
                   : 'text-[#667085] hover:bg-[#f7f9fc] dark:text-[#a1a1aa] dark:hover:bg-[#292929]'
               }`}
             >
-
               <span className="flex min-w-0 items-center gap-2">
-
                 <span
                   className={`h-[6px] w-[6px] shrink-0 rounded-full ${
                     active
@@ -82,7 +82,6 @@ export default function CommunitySidebar({
                 <span className="truncate font-medium">
                   {community.name}
                 </span>
-
               </span>
 
               <span
@@ -92,13 +91,11 @@ export default function CommunitySidebar({
                     : 'text-[#a1aaba] dark:text-[#777]'
                 }`}
               >
-                {community.count}
+                {count}
               </span>
-
             </Link>
           )
         })}
-
       </div>
 
       <Link
@@ -108,7 +105,6 @@ export default function CommunitySidebar({
         <span className="text-[16px]">+</span>
         Browse all communities
       </Link>
-
     </aside>
   )
 }

@@ -1,46 +1,45 @@
 @import "tailwindcss";
 
-/* =========================================================
-   FORMUS THEME VARIABLES
-   ========================================================= */
-
 :root {
   --page-background: #f7f9fc;
-
   --surface: #ffffff;
-  --surface-secondary: #f8fafc;
+  --surface-secondary: #f5f8fc;
 
-  --text-primary: #172033;
-  --text-secondary: #687386;
+  /* Visible blue/slate text for LIGHT mode */
+  --text-primary: #304968;
+  --text-secondary: #607894;
+  --text-muted: #8194ad;
 
-  --border: #e1e6ed;
+  --border: #dbe4ee;
 
-  --header-background: #080a0d;
-  --header-text: #ffffff;
+  /* Header stays black in both themes */
+  --header-background: #000000;
+  --header-text: #dce9f8;
+
+  /* Accent */
+  --accent: #286ff1;
+  --accent-soft: #eaf2ff;
 }
-
-/* =========================================================
-   DARK MODE
-   ========================================================= */
 
 html.dark {
-  --page-background: #1A1A1A;
-
+  --page-background: #1a1a1a;
   --surface: #222222;
-  --surface-secondary: #252525;
+  --surface-secondary: #292929;
 
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
+  /* Blue/slate instead of white */
+  --text-primary: #bcd0e7;
+  --text-secondary: #91a8c2;
+  --text-muted: #71859d;
 
-  --border: #333333;
+  --border: #373f49;
 
-  --header-background: #1A1A1A;
-  --header-text: #ffffff;
+  /* Header remains black */
+  --header-background: #000000;
+  --header-text: #c8dbf0;
+
+  --accent: #5d9aff;
+  --accent-soft: #263750;
 }
-
-/* =========================================================
-   BASE
-   ========================================================= */
 
 html {
   background: var(--page-background);
@@ -50,28 +49,15 @@ body {
   margin: 0;
   background: var(--page-background);
   color: var(--text-primary);
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
+  font-family: Arial, Helvetica, sans-serif;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
 }
 
-/* =========================================================
-   GLOBAL BOX SIZING
-   ========================================================= */
-
 * {
   box-sizing: border-box;
 }
-
-/* =========================================================
-   LINKS / BUTTONS
-   ========================================================= */
 
 button,
 a {
@@ -82,19 +68,19 @@ button {
   cursor: pointer;
 }
 
-/* =========================================================
+/* =========================================
    HEADER
-   ========================================================= */
+========================================= */
 
 .forum-header {
-  background: var(--header-background);
-  color: var(--header-text);
-  border-color: var(--border);
+  background: #000000 !important;
+  color: #c8dbf0 !important;
+  border-color: #202020 !important;
 }
 
-/* =========================================================
+/* =========================================
    THREAD CARDS
-   ========================================================= */
+========================================= */
 
 .thread-card {
   background: var(--surface);
@@ -105,21 +91,82 @@ button {
   background: var(--surface-secondary);
 }
 
-/* =========================================================
-   DARK THREAD CARD
-   ========================================================= */
-
-html.dark .thread-card h2 {
-  color: #f4f4f5;
+.thread-card h2 {
+  color: var(--text-primary);
 }
 
-html.dark .thread-card p {
-  color: #a1a1aa;
+.thread-card p {
+  color: var(--text-secondary);
 }
 
-/* =========================================================
+/* =========================================
+   GENERAL TEXT HELPERS
+========================================= */
+
+.text-primary-theme {
+  color: var(--text-primary);
+}
+
+.text-secondary-theme {
+  color: var(--text-secondary);
+}
+
+.text-muted-theme {
+  color: var(--text-muted);
+}
+
+/* =========================================
+   COMMENTS
+========================================= */
+
+.comment-section {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.comment-header {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.comment-tab {
+  color: var(--text-secondary);
+}
+
+.comment-tab:hover {
+  color: var(--accent);
+}
+
+.comment-tab.active {
+  color: var(--accent);
+}
+
+.comment-text {
+  color: var(--text-secondary);
+}
+
+.comment-meta {
+  color: var(--text-muted);
+}
+
+.comment-input {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.comment-input::placeholder {
+  color: var(--text-muted);
+}
+
+.comment-input:focus {
+  border-color: var(--accent);
+}
+
+/* =========================================
    SCROLLBAR
-   ========================================================= */
+========================================= */
 
 ::-webkit-scrollbar {
   width: 7px;
@@ -139,11 +186,11 @@ html.dark .thread-card p {
   background: #6f7782;
 }
 
-/* =========================================================
+/* =========================================
    SELECTION
-   ========================================================= */
+========================================= */
 
 ::selection {
   background: #286ff1;
-  color: white;
+  color: #ffffff;
 }
