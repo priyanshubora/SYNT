@@ -16,11 +16,14 @@ export default async function SettingsPage() {
     redirect('/login?next=/settings')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, avatar_url')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } =
+    await supabase
+      .from('profiles')
+      .select(
+        'username, avatar_url',
+      )
+      .eq('id', user.id)
+      .single()
 
   if (!profile) {
     redirect('/profile')
@@ -33,7 +36,8 @@ export default async function SettingsPage() {
           <h1
             className="text-xl font-bold"
             style={{
-              color: 'var(--text-primary)',
+              color:
+                'var(--text-primary)',
             }}
           >
             Settings
@@ -42,17 +46,20 @@ export default async function SettingsPage() {
           <p
             className="mt-1 text-xs"
             style={{
-              color: 'var(--text-muted)',
+              color:
+                'var(--text-muted)',
             }}
           >
-            Manage your SNYT profile and
-            account settings.
+            Manage your SNYT account and
+            notification preferences.
           </p>
         </div>
 
         <SettingsForm
           username={profile.username}
-          avatarUrl={profile.avatar_url}
+          avatarUrl={
+            profile.avatar_url
+          }
         />
       </div>
     </ForumShell>

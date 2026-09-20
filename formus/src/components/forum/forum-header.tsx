@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+
+import NotificationBell from '@/components/forum/notification-bell'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ForumHeader() {
@@ -10,7 +12,7 @@ export default function ForumHeader() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('formus-theme')
+    const savedTheme = localStorage.getItem('snyt-theme')
 
     if (savedTheme === 'dark') {
       document.documentElement.classList.add('dark')
@@ -40,14 +42,14 @@ export default function ForumHeader() {
         setUsername(
           user.user_metadata?.user_name ??
             user.email?.split('@')[0] ??
-            'User'
+            'User',
         )
       }
 
       setAvatarUrl(
         user.user_metadata?.avatar_url ??
           user.user_metadata?.picture ??
-          null
+          null,
       )
     }
 
@@ -61,21 +63,18 @@ export default function ForumHeader() {
 
     if (newDarkMode) {
       document.documentElement.classList.add('dark')
-      localStorage.setItem('formus-theme', 'dark')
+      localStorage.setItem('snyt-theme', 'dark')
     } else {
       document.documentElement.classList.remove('dark')
-      localStorage.setItem('formus-theme', 'light')
+      localStorage.setItem('snyt-theme', 'light')
     }
   }
 
   return (
-    <header className="h-[46px] border-b border-[#202020] bg-black text-white">
+    <header className="forum-header h-[46px] border-b bg-black text-white">
       <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-4">
-
         {/* LEFT */}
-
         <div className="flex h-full items-center gap-8">
-
           <Link
             href="/"
             className="flex h-full items-center"
@@ -88,7 +87,6 @@ export default function ForumHeader() {
           </Link>
 
           <nav className="flex h-full items-center gap-6 text-[12px] font-medium">
-
             <Link
               href="/"
               className="flex h-full items-center opacity-80 hover:opacity-100"
@@ -118,16 +116,15 @@ export default function ForumHeader() {
             >
               About
             </Link>
-
           </nav>
         </div>
 
         {/* RIGHT */}
-
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* NOTIFICATIONS */}
+          <NotificationBell />
 
           {/* THEME */}
-
           <button
             type="button"
             onClick={toggleTheme}
@@ -143,7 +140,6 @@ export default function ForumHeader() {
           </button>
 
           {/* PROFILE */}
-
           <Link
             href="/profile"
             className="flex items-center gap-2"
@@ -168,7 +164,6 @@ export default function ForumHeader() {
               ▼
             </span>
           </Link>
-
         </div>
       </div>
     </header>
