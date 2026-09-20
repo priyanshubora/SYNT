@@ -7,56 +7,61 @@ import ThreadCard from '@/components/forum/thread-card'
 
 import { createClient } from '@/lib/supabase/server'
 
-const communityData: Record<
+export const dynamic = 'force-dynamic'
+
+const communityMeta: Record<
   string,
   {
     name: string
     leader: string
-    discussions: string
-    members: string
   }
 > = {
   esports: {
     name: 'Esports',
     leader: 'FORMUS',
-    discussions: '420',
-    members: '9k',
   },
 
   bgmi: {
     name: 'BGMI',
     leader: 'KRAFTON',
-    discussions: '1.2K',
-    members: '18k',
   },
 
   valorant: {
     name: 'Valorant',
     leader: 'RIOT GAMES',
-    discussions: '850',
-    members: '12k',
   },
 
   chess: {
     name: 'Chess',
     leader: 'CHESS',
-    discussions: '110',
-    members: '4k',
   },
 
   'free-fire': {
     name: 'Free Fire',
     leader: 'GARENA',
-    discussions: '275',
-    members: '11k',
+  },
+
+  'off-topic': {
+    name: 'Off-Topic / Lounge',
+    leader: 'FORMUS',
   },
 
   offtopic: {
     name: 'Off-Topic / Lounge',
     leader: 'FORMUS',
-    discussions: '315',
-    members: '7k',
   },
+}
+
+function formatCompactCount(value: number) {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')}M`
+  }
+
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}K`
+  }
+
+  return value.toString()
 }
 
 const THREADS_PER_PAGE = 30
@@ -84,9 +89,23 @@ export default async function CategoryPage({
   const { slug } = await params
   const { page, sort } = await searchParams
 
-  const community = communityData[slug]
+  const normalizedSlug =
+    slug === 'offtopic' ? 'off-topic' : slug
 
-  if (!community) {
+  const community = communityMeta[normalizedSlug]
+
+  const supabase = await createClient()
+
+  const {
+    data: category,
+    error: categoryError,
+  } = await supabase
+    .from('categories')
+    .select('id, name, slug')
+    .eq('slug', normalizedSlug)
+    .maybeSingle()
+
+  if (!community || categoryError || !category) {
     notFound()
   }
 
@@ -106,7 +125,51 @@ export default async function CategoryPage({
       ? requestedPage
       : 1
 
-  const supabase = await createClient()
+  const {
+    count: totalThreads,
+    error: countError,
+  } = await supabase
+    .from('threads')
+    .select('*', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('category_id', category.id)
+
+  if (countError) {
+    console.error(
+      'Category thread count error:',
+      countError
+    )
+  }
+
+  const {
+    data: threadAuthors,
+    error: authorError,
+  } = await supabase
+    .from('threads')
+    .select('author_id')
+    .eq('category_id', category.id)
+
+  if (authorError) {
+    console.error(
+      'Category member count error:',
+      authorError
+    )
+  }
+
+  const uniqueMembers = new Set(
+    (threadAuthors ?? []).map(
+      (row) => row.author_id
+    )
+  ).size
+
+  const liveDiscussions = formatCompactCount(
+    totalThreads ?? 0
+  )
+  const liveMembers = formatCompactCount(
+    uniqueMembers
+  )
 
   /*
    * TOP AND MOST REPLIES
@@ -146,18 +209,6 @@ export default async function CategoryPage({
     countQuery = countQuery.gte(
       'created_at',
       sevenDaysAgo.toISOString()
-    )
-  }
-
-  const {
-    count: totalThreads,
-    error: countError,
-  } = await countQuery
-
-  if (countError) {
-    console.error(
-      'Category thread count error:',
-      countError
     )
   }
 
@@ -338,10 +389,10 @@ export default async function CategoryPage({
 
         <CommunityHeader
           name={community.name}
-          slug={slug}
+          slug={normalizedSlug}
           leader={community.leader}
-          discussions={community.discussions}
-          members={community.members}
+          discussions={liveDiscussions}
+          members={liveMembers}
         />
 
         {/* SORT BAR */}
