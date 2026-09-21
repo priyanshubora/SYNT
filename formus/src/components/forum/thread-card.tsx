@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type ThreadCardProps = {
   thread: {
@@ -45,9 +48,15 @@ function timeAgo(date: string) {
 export default function ThreadCard({
   thread,
 }: ThreadCardProps) {
+  const router = useRouter()
+  const threadHref = `/thread/${thread.id}`
+
   return (
     <Link
-      href={`/thread/${thread.id}`}
+      href={threadHref}
+      prefetch={true}
+      onMouseEnter={() => router.prefetch(threadHref)}
+      onFocus={() => router.prefetch(threadHref)}
       className="thread-card group block border-b px-4 py-4 transition sm:px-5"
     >
       <div className="flex gap-4">

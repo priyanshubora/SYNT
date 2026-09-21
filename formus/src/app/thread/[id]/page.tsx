@@ -35,14 +35,23 @@ type RawComment = {
 function getRootCommentId(
   commentId: string,
   commentsById: Map<string, RawComment>,
+  cache = new Map<string, string>(),
 ) {
+  const cachedRoot = cache.get(commentId)
+
+  if (cachedRoot) {
+    return cachedRoot
+  }
+
   const visited = new Set<string>()
 
   let currentId = commentId
+  let rootId = commentId
 
   while (true) {
     if (visited.has(currentId)) {
-      return commentId
+      cache.set(commentId, rootId)
+      return rootId
     }
 
     visited.add(currentId)
@@ -50,7 +59,9 @@ function getRootCommentId(
     const current = commentsById.get(currentId)
 
     if (!current || !current.parent_id) {
-      return current?.id ?? commentId
+      rootId = current?.id ?? commentId
+      cache.set(commentId, rootId)
+      return rootId
     }
 
     currentId = current.parent_id
@@ -196,6 +207,8 @@ export default async function ThreadPage({
    * containing its root comment.
    */
 
+  const rootIdCache = new Map<string, string>()
+
   if (commentId) {
     const targetComment =
       commentsById.get(commentId)
@@ -205,6 +218,7 @@ export default async function ThreadPage({
         getRootCommentId(
           targetComment.id,
           commentsById,
+          rootIdCache,
         )
 
       const rootIndex =
@@ -270,6 +284,7 @@ export default async function ThreadPage({
         getRootCommentId(
           comment.id,
           commentsById,
+          rootIdCache,
         )
 
       return visibleRootIds.has(
@@ -290,21 +305,38 @@ export default async function ThreadPage({
     ),
   ]
 
-  const commentProfiles =
+  const profilesPromise =
     authorIds.length > 0
-      ? (
-          await supabase
-            .from('profiles')
-            .select(
-              'id, username, avatar_url, team_id',
-            )
-            .in('id', authorIds)
-        ).data ?? []
-      : []
+      ? supabase
+          .from('profiles')
+          .select(
+            'id, username, avatar_url, team_id',
+          )
+          .in('id', authorIds)
+      : Promise.resolve({ data: [] })
 
-  /*
-   * COMMENT TEAMS
-   */
+  const commentIds = visibleComments.map(
+    (comment) => comment.id,
+  )
+
+  const votesPromise =
+    commentIds.length > 0
+      ? supabase
+          .from('comment_votes')
+          .select(
+            'comment_id, user_id, value',
+          )
+          .in('comment_id', commentIds)
+      : Promise.resolve({ data: [] })
+
+  const [profilesResult, votesResult] =
+    await Promise.all([
+      profilesPromise,
+      votesPromise,
+    ])
+
+  const commentProfiles =
+    profilesResult.data ?? []
 
   const teamIds = [
     ...new Set(
@@ -322,44 +354,27 @@ export default async function ThreadPage({
     ),
   ]
 
-  const teams =
+  const teamsResult =
     teamIds.length > 0
-      ? (
-          await supabase
-            .from('teams')
-            .select(
-              'id, name, logo_url',
-            )
-            .in(
-              'id',
-              teamIds,
-            )
-        ).data ?? []
-      : []
+      ? await supabase
+          .from('teams')
+          .select(
+            'id, name, logo_url',
+          )
+          .in('id', teamIds)
+      : { data: [] }
+
+  /*
+   * COMMENT TEAMS
+   */
+
+  const teams = teamsResult.data ?? []
 
   /*
    * COMMENT VOTES
    */
 
-  const commentIds =
-    visibleComments.map(
-      (comment) => comment.id,
-    )
-
-  const commentVotes =
-    commentIds.length > 0
-      ? (
-          await supabase
-            .from('comment_votes')
-            .select(
-              'comment_id, user_id, value',
-            )
-            .in(
-              'comment_id',
-              commentIds,
-            )
-        ).data ?? []
-      : []
+  const commentVotes = votesResult.data ?? []
 
   /*
    * BUILD CLIENT COMMENT DATA

@@ -30,13 +30,35 @@ export default async function ProfilePage({
     redirect('/login?next=/profile')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(
-      'id, username, avatar_url, team_id, reputation, post_count',
-    )
-    .eq('id', user.id)
-    .single()
+  const [profileResult, threadsResult, commentsResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(
+        'id, username, avatar_url, team_id, reputation, post_count',
+      )
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('thread_stats')
+      .select(
+        'id, title, category_name, category_slug, created_at, score, comment_count',
+      )
+      .eq('author_id', user.id)
+      .order('created_at', {
+        ascending: false,
+      })
+      .limit(30),
+    supabase
+      .from('comments')
+      .select('id, thread_id, content, created_at')
+      .eq('author_id', user.id)
+      .order('created_at', {
+        ascending: false,
+      })
+      .limit(30),
+  ])
+
+  const { data: profile } = profileResult
 
   if (!profile) {
     redirect('/login?next=/profile')
@@ -56,25 +78,8 @@ export default async function ProfilePage({
     teamLogoUrl = team?.logo_url ?? null
   }
 
-  const { data: threads } = await supabase
-    .from('thread_stats')
-    .select(
-      'id, title, category_name, category_slug, created_at, score, comment_count',
-    )
-    .eq('author_id', user.id)
-    .order('created_at', {
-      ascending: false,
-    })
-    .limit(30)
-
-  const { data: comments } = await supabase
-    .from('comments')
-    .select('id, thread_id, content, created_at')
-    .eq('author_id', user.id)
-    .order('created_at', {
-      ascending: false,
-    })
-    .limit(30)
+  const threads = threadsResult.data
+  const comments = commentsResult.data
 
   return (
     <ForumShell>
@@ -163,6 +168,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/profile"
+                prefetch={true}
                 className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
                 style={{
                   background:
@@ -184,6 +190,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/profile?view=comments"
+                prefetch={true}
                 className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
                 style={{
                   background:
@@ -205,6 +212,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/profile?view=rank"
+                prefetch={true}
                 className="flex items-center justify-between px-5 py-3 text-xs font-semibold"
                 style={{
                   background:
@@ -231,6 +239,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/profile/edit"
+                prefetch={true}
                 className="block px-5 py-3 text-xs font-semibold"
                 style={{
                   color: 'var(--text-secondary)',
@@ -248,6 +257,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/settings"
+                prefetch={true}
                 className="block px-5 py-3 text-xs font-semibold"
                 style={{
                   color: 'var(--text-secondary)',

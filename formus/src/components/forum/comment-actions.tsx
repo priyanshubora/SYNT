@@ -160,7 +160,7 @@ export default function CommentActions({
               type="button"
               onClick={deleteComment}
               disabled={deleting}
-              className="border border-red-500 bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white disabled:opacity-60"
+              className="border border-red-300 bg-red-100 px-2.5 py-1 text-[10px] font-bold text-red-700 disabled:opacity-60 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
             >
               {deleting ? 'Deleting...' : 'Yes, delete'}
             </button>
@@ -204,7 +204,7 @@ export default function CommentActions({
             setError('')
           }}
           disabled={deleting}
-          className="text-xs font-semibold text-red-500 hover:underline disabled:opacity-60"
+          className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
         >
           Delete
         </button>

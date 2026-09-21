@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
 import CommunityHeader from '@/components/forum/community-header'
+import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
 
 import { createClient } from '@/lib/supabase/server'
@@ -125,16 +126,27 @@ export default async function CategoryPage({
       ? requestedPage
       : 1
 
+  const [
+    categoryCountResult,
+    categoryAuthorsResult,
+  ] = await Promise.all([
+    supabase
+      .from('threads')
+      .select('*', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('category_id', category.id),
+    supabase
+      .from('threads')
+      .select('author_id')
+      .eq('category_id', category.id),
+  ])
+
   const {
     count: totalThreads,
     error: countError,
-  } = await supabase
-    .from('threads')
-    .select('*', {
-      count: 'exact',
-      head: true,
-    })
-    .eq('category_id', category.id)
+  } = categoryCountResult
 
   if (countError) {
     console.error(
@@ -146,10 +158,7 @@ export default async function CategoryPage({
   const {
     data: threadAuthors,
     error: authorError,
-  } = await supabase
-    .from('threads')
-    .select('author_id')
-    .eq('category_id', category.id)
+  } = categoryAuthorsResult
 
   if (authorError) {
     console.error(
@@ -212,7 +221,12 @@ export default async function CategoryPage({
     )
   }
 
-  const total = totalThreads ?? 0
+  const totalCountForList =
+    (await countQuery).count ??
+    totalThreads ??
+    0
+
+  const total = totalCountForList
 
   const totalPages = Math.max(
     1,
@@ -399,69 +413,10 @@ export default async function CategoryPage({
 
         <div className="flex items-center justify-between py-4">
 
-          <div className="flex gap-2">
-
-            {/* LATEST */}
-
-            <Link
-              href={sortUrl('latest')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'latest'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'latest'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Latest
-            </Link>
-
-            {/* TOP */}
-
-            <Link
-              href={sortUrl('top')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'top'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'top'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Top
-            </Link>
-
-            {/* MOST REPLIES */}
-
-            <Link
-              href={sortUrl('replies')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'replies'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'replies'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Most Replies
-            </Link>
-
-          </div>
+          <SortFilter
+            currentSort={currentSort}
+            basePath={`/category/${slug}`}
+          />
 
           <span
             className="hidden text-[10px] sm:block"

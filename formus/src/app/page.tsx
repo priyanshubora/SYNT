@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import ForumShell from '@/components/forum/forum-shell'
+import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
 
 import { createClient } from '@/lib/supabase/server'
@@ -315,69 +316,10 @@ export default async function HomePage({
 
         <div className="mb-5 flex items-center justify-between">
 
-          <div className="flex gap-2">
-
-            {/* LATEST */}
-
-            <Link
-              href={sortUrl('latest')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'latest'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'latest'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Latest
-            </Link>
-
-            {/* TOP */}
-
-            <Link
-              href={sortUrl('top')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'top'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'top'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Top
-            </Link>
-
-            {/* MOST REPLIES */}
-
-            <Link
-              href={sortUrl('replies')}
-              className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-              style={{
-                background:
-                  currentSort === 'replies'
-                    ? '#74A662'
-                    : 'var(--surface-secondary)',
-
-                color:
-                  currentSort === 'replies'
-                    ? '#ffffff'
-                    : 'var(--text-secondary)',
-              }}
-            >
-              Most Replies
-            </Link>
-
-          </div>
+          <SortFilter
+            currentSort={currentSort}
+            basePath="/"
+          />
 
           <span
             className="hidden text-[10px] sm:block"

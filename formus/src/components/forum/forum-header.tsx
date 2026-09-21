@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import NotificationBell from '@/components/forum/notification-bell'
@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function ForumHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const [darkMode, setDarkMode] = useState(false)
   const [username, setUsername] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -178,6 +179,9 @@ export default function ForumHeader() {
           {/* PROFILE */}
           <Link
             href="/profile"
+            prefetch={true}
+            onMouseEnter={() => router.prefetch('/profile')}
+            onFocus={() => router.prefetch('/profile')}
             className="flex items-center gap-2"
           >
             {avatarUrl ? (
