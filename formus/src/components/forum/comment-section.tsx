@@ -20,6 +20,7 @@ type Comment = {
   content: string
   created_at: string
   updated_at: string
+  comment_number: number
   author_username: string
   author_avatar_url: string | null
   team_name: string | null
@@ -632,41 +633,22 @@ export default function CommentSection({
               }}
             >
               <div className="flex gap-3">
-
-                {/* AVATAR */}
-
                 <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border text-xs font-bold"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold"
                   style={{
                     background:
-                      'var(--accent-soft)',
+                      'transparent',
                     borderColor:
-                      'var(--border)',
+                      '#74A662',
                     color:
-                      'var(--accent)',
+                      '#74A662',
                   }}
                 >
-                  {comment.author_avatar_url ? (
-                    <img
-                      src={
-                        comment.author_avatar_url
-                      }
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    comment.author_username
-                      .slice(0, 1)
-                      .toUpperCase()
-                  )}
+                  #{comment.comment_number}
                 </div>
 
                 <div className="min-w-0 flex-1">
-
-                  {/* HEADER */}
-
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-
                     <span
                       className="text-sm font-bold"
                       style={{
@@ -747,7 +729,6 @@ export default function CommentSection({
                         · edited
                       </span>
                     )}
-
                   </div>
 
                   {/* CONTENT */}

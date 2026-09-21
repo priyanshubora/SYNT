@@ -163,6 +163,18 @@ export default async function ThreadPage({
   const rawComments: RawComment[] =
     allComments ?? []
 
+  const commentNumberById =
+    new Map<string, number>()
+
+  rawComments.forEach(
+    (comment, index) => {
+      commentNumberById.set(
+        comment.id,
+        index + 1,
+      )
+    },
+  )
+
   const totalCommentCount =
     rawComments.length
 
@@ -446,6 +458,10 @@ export default async function ThreadPage({
             comment.created_at,
           updated_at:
             comment.updated_at,
+          comment_number:
+            commentNumberById.get(
+              comment.id,
+            ) ?? 1,
           author_username:
             profile?.username ??
             'User',
