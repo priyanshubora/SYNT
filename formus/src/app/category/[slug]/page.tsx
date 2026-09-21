@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
 import CommunityHeader from '@/components/forum/community-header'
+import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
 
@@ -396,8 +397,21 @@ export default async function CategoryPage({
     )
 
   return (
-    <ForumShell activeSlug={slug}>
-      <div className="mx-auto max-w-[1000px]">
+    <>
+      <RealtimeRefresh
+        channelName={`forum-live-updates:${normalizedSlug}`}
+        tableFilters={[
+          {
+            table: 'threads',
+            filter: `category_id=eq.${category.id}`,
+          },
+          { table: 'comments' },
+          { table: 'thread_votes' },
+        ]}
+      />
+
+      <ForumShell activeSlug={slug}>
+        <div className="mx-auto max-w-[1000px]">
 
         {/* COMMUNITY HEADER */}
 
@@ -671,6 +685,7 @@ export default async function CategoryPage({
         </div>
 
       </div>
-    </ForumShell>
+      </ForumShell>
+    </>
   )
 }

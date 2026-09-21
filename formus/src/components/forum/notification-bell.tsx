@@ -201,7 +201,8 @@ export default function NotificationBell() {
   )
 
   useEffect(() => {
-    let subscription: any = null
+    let isMounted = true
+    let subscription: { unsubscribe: () => void } | null = null
 
     async function setupRealtime() {
       const supabase = createClient()
@@ -210,34 +211,39 @@ export default function NotificationBell() {
         data: { user },
       } = await supabase.auth.getUser()
 
-      if (!user) {
+      if (!user || !isMounted) {
         return
       }
 
       await loadUnreadCount()
       await loadNotifications(true)
 
-      subscription = supabase
-        .channel(`notifications:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          async () => {
-            await loadUnreadCount()
-            await loadNotifications(true)
-          },
-        )
-        .subscribe()
+      const channel = supabase.channel(
+        `notifications:${user.id}`,
+      )
+
+      channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async () => {
+          await loadUnreadCount()
+          await loadNotifications(true)
+        },
+      )
+
+      subscription = channel
+      await channel.subscribe()
     }
 
     setupRealtime()
 
     return () => {
+      isMounted = false
       if (subscription) {
         subscription.unsubscribe()
       }
@@ -370,7 +376,7 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          className="absolute right-0 top-11 z-50 w-[350px] max-w-[calc(100vw-24px)] border shadow-xl"
+          className="absolute left-1/2 top-11 z-50 w-[calc(100vw-16px)] -translate-x-1/2 border shadow-xl sm:left-auto sm:right-0 sm:w-[350px] sm:translate-x-0"
           style={{
             background:
               'var(--surface)',
@@ -457,7 +463,7 @@ export default function NotificationBell() {
                 </div>
 
                 <div className="mt-1 text-[10px]">
-                  You're all caught up.
+                  You are all caught up.
                 </div>
               </div>
             ) : (

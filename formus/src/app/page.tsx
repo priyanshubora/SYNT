@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import ForumShell from '@/components/forum/forum-shell'
+import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
 
@@ -62,7 +63,7 @@ export default async function HomePage({
    */
 
   let countQuery = supabase
-    .from('thread_stats')
+    .from('threads')
     .select('*', {
       count: 'exact',
       head: true,
@@ -262,9 +263,11 @@ export default async function HomePage({
     )
 
   return (
-    <ForumShell>
+    <>
+      <RealtimeRefresh />
 
-      <div className="mx-auto max-w-4xl">
+      <ForumShell>
+        <div className="mx-auto max-w-4xl">
 
         {/* HEADER */}
 
@@ -629,7 +632,7 @@ export default async function HomePage({
         </div>
 
       </div>
-
-    </ForumShell>
+      </ForumShell>
+    </>
   )
 }

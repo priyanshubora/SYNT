@@ -46,15 +46,24 @@ export default function ForumShell({
           borderColor: 'var(--border)',
         }}
       >
-        <div className="mx-auto flex max-w-[1400px] flex-col justify-between gap-3 px-5 py-5 text-[9px] text-[#9aa4b2] sm:flex-row">
+        <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-3 px-5 py-5 text-[9px] text-[#9aa4b2] sm:flex-row">
           <span>
             © 2026 SNYT Esports. Built for competitive gaming communities.
           </span>
 
-          <div className="flex gap-5">
-            <span>Guidelines</span>
-            <span>Privacy</span>
-            <span>Support</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 sm:justify-end">
+            <a href="/rules" className="transition hover:text-white">
+              Guidelines
+            </a>
+            <a href="/about" className="transition hover:text-white">
+              Privacy
+            </a>
+            <a href="mailto:borapriyanshu24@gmail.com" className="transition hover:text-white">
+              Support
+            </a>
+            <a href="mailto:borapriyanshu24@gmail.com" className="transition hover:text-white">
+              borapriyanshu24@gmail.com
+            </a>
           </div>
         </div>
       </footer>

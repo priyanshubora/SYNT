@@ -219,10 +219,11 @@ export default function CommentSection({
     const nextUrl =
       `/thread/${threadId}${hash}`
 
-    window.location.href =
+    router.push(
       `/login?next=${encodeURIComponent(
         nextUrl,
-      )}`
+      )}`,
+    )
   }
 
   /*

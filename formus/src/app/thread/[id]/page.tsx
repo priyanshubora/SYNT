@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
+import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import VoteButtons from '@/components/forum/vote-buttons'
 import CommentSection from '@/components/forum/comment-section'
 import ThreadActions from '@/components/forum/thread-actions'
@@ -468,12 +469,22 @@ export default async function ThreadPage({
     thread.team_logo_url ?? null
 
   return (
-    <ForumShell
-      activeSlug={
-        thread.category_slug
-      }
-    >
-      <div className="mx-auto max-w-[1000px]">
+    <>
+      <RealtimeRefresh
+        channelName={`thread-live-updates:${id}`}
+        tableFilters={[
+          { table: 'threads', filter: `id=eq.${id}` },
+          { table: 'comments', filter: `thread_id=eq.${id}` },
+          { table: 'thread_votes', filter: `thread_id=eq.${id}` },
+        ]}
+      />
+
+      <ForumShell
+        activeSlug={
+          thread.category_slug
+        }
+      >
+        <div className="mx-auto max-w-[1000px]">
 
         {/* BACK LINK */}
 
@@ -736,6 +747,7 @@ export default async function ThreadPage({
           }
         />
       </div>
-    </ForumShell>
+      </ForumShell>
+    </>
   )
 }

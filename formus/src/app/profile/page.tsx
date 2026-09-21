@@ -467,7 +467,7 @@ export default async function ProfilePage({
                       color: 'var(--text-muted)',
                     }}
                   >
-                    You haven't created any threads yet.
+                    You have not created any threads yet.
                   </div>
                 )}
               </section>
@@ -538,7 +538,7 @@ export default async function ProfilePage({
                       color: 'var(--text-muted)',
                     }}
                   >
-                    You haven't posted any comments yet.
+                    You have not posted any comments yet.
                   </div>
                 )}
               </section>

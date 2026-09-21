@@ -17,6 +17,77 @@ type Preferences = {
   replies: boolean
 }
 
+type SettingToggleProps = {
+  enabled: boolean
+  label: string
+  description: string
+  settingKey: keyof Preferences
+  onToggle: (key: keyof Preferences) => void
+  loading: boolean
+  saving: boolean
+}
+
+function SettingToggle({
+  enabled,
+  label,
+  description,
+  settingKey,
+  onToggle,
+  loading,
+  saving,
+}: SettingToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(settingKey)}
+      disabled={loading || saving}
+      className="flex w-full items-center justify-between gap-4 border-b px-5 py-4 text-left last:border-b-0 transition hover:bg-[var(--surface-secondary)]"
+      style={{
+        borderColor: 'var(--border)',
+      }}
+    >
+      <div className="min-w-0">
+        <div
+          className="text-xs font-bold"
+          style={{
+            color: 'var(--text-primary)',
+          }}
+        >
+          {label}
+        </div>
+
+        <div
+          className="mt-1 text-[10px]"
+          style={{
+            color: 'var(--text-muted)',
+          }}
+        >
+          {description}
+        </div>
+      </div>
+
+      <span
+        className="relative h-5 w-9 shrink-0 border transition"
+        style={{
+          background: enabled
+            ? 'var(--accent)'
+            : 'var(--surface-secondary)',
+          borderColor: enabled
+            ? 'var(--accent)'
+            : 'var(--border)',
+        }}
+      >
+        <span
+          className="absolute top-[2px] h-[14px] w-[14px] bg-white transition"
+          style={{
+            left: enabled ? '17px' : '2px',
+          }}
+        />
+      </span>
+    </button>
+  )
+}
+
 export default function SettingsForm({
   username,
   avatarUrl,
@@ -195,7 +266,7 @@ export default function SettingsForm({
 
     await supabase.auth.signOut()
 
-    window.location.href = '/'
+    router.push('/')
   }
 
   async function deleteAccount() {
@@ -221,7 +292,7 @@ export default function SettingsForm({
         )
       }
 
-      window.location.href = '/'
+      router.push('/')
     } catch (error) {
       console.error(
         'Account deletion failed:',
@@ -234,79 +305,6 @@ export default function SettingsForm({
 
       setDeleting(false)
     }
-  }
-
-  function SettingToggle({
-    enabled,
-    label,
-    description,
-    settingKey,
-  }: {
-    enabled: boolean
-    label: string
-    description: string
-    settingKey: keyof Preferences
-  }) {
-    return (
-      <button
-        type="button"
-        onClick={() =>
-          updatePreference(settingKey)
-        }
-        disabled={
-          loadingPreferences ||
-          savingPreference !== null
-        }
-        className="flex w-full items-center justify-between gap-4 border-b px-5 py-4 text-left last:border-b-0 transition hover:bg-[var(--surface-secondary)]"
-        style={{
-          borderColor:
-            'var(--border)',
-        }}
-      >
-        <div className="min-w-0">
-          <div
-            className="text-xs font-bold"
-            style={{
-              color:
-                'var(--text-primary)',
-            }}
-          >
-            {label}
-          </div>
-
-          <div
-            className="mt-1 text-[10px]"
-            style={{
-              color:
-                'var(--text-muted)',
-            }}
-          >
-            {description}
-          </div>
-        </div>
-
-        <span
-          className="relative h-5 w-9 shrink-0 border transition"
-          style={{
-            background: enabled
-              ? 'var(--accent)'
-              : 'var(--surface-secondary)',
-            borderColor: enabled
-              ? 'var(--accent)'
-              : 'var(--border)',
-          }}
-        >
-          <span
-            className="absolute top-[2px] h-[14px] w-[14px] bg-white transition"
-            style={{
-              left: enabled
-                ? '17px'
-                : '2px',
-            }}
-          />
-        </span>
-      </button>
-    )
   }
 
   return (
@@ -468,29 +466,32 @@ export default function SettingsForm({
         <div>
           <SettingToggle
             settingKey="upvotes"
-            enabled={
-              preferences.upvotes
-            }
+            enabled={preferences.upvotes}
             label="Thread upvotes"
             description="Notify me when someone upvotes my thread."
+            onToggle={updatePreference}
+            loading={loadingPreferences}
+            saving={savingPreference !== null}
           />
 
           <SettingToggle
             settingKey="mentions"
-            enabled={
-              preferences.mentions
-            }
+            enabled={preferences.mentions}
             label="Mentions"
             description="Notify me when someone mentions me with @username."
+            onToggle={updatePreference}
+            loading={loadingPreferences}
+            saving={savingPreference !== null}
           />
 
           <SettingToggle
             settingKey="replies"
-            enabled={
-              preferences.replies
-            }
+            enabled={preferences.replies}
             label="Replies"
             description="Notify me when someone replies to my comment."
+            onToggle={updatePreference}
+            loading={loadingPreferences}
+            saving={savingPreference !== null}
           />
         </div>
       </section>

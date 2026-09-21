@@ -128,7 +128,7 @@ export default function LoginPage() {
 
           <div className="rounded-[10px] bg-[#f7f9fc] px-4 py-3 dark:bg-[#292929]">
             <p className="text-center text-[10px] leading-4 text-[#8993a3] dark:text-[#999]">
-              New here? After signing in, you'll be able to choose your
+              New here? After signing in, you will be able to choose your
               username and team flair.
             </p>
           </div>

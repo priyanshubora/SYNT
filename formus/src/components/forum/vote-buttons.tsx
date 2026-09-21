@@ -34,9 +34,9 @@ export default function VoteButtons({
     } = await supabase.auth.getUser()
 
     if (!user) {
-      window.location.href = `/login?next=${encodeURIComponent(
-        window.location.pathname,
-      )}`
+      router.push(
+        `/login?next=${encodeURIComponent(window.location.pathname)}`,
+      )
       return
     }
 

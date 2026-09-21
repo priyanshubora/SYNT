@@ -10,7 +10,13 @@ import { createClient } from '@/lib/supabase/client'
 export default function ForumHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    return localStorage.getItem('snyt-theme') === 'dark'
+  })
   const [username, setUsername] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
@@ -23,11 +29,10 @@ export default function ForumHeader() {
   const isAboutActive = pathname === '/about'
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('snyt-theme')
-
-    if (savedTheme === 'dark') {
+    if (darkMode) {
       document.documentElement.classList.add('dark')
-      setDarkMode(true)
+    } else {
+      document.documentElement.classList.remove('dark')
     }
 
     async function loadUser() {
