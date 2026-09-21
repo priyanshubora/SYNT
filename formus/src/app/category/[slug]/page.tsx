@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import ForumShell from '@/components/forum/forum-shell'
+import ForumShellWithCounts from '@/components/forum/forum-shell-with-counts'
 import CommunityHeader from '@/components/forum/community-header'
 import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import SortFilter from '@/components/forum/sort-filter'
@@ -410,7 +410,7 @@ export default async function CategoryPage({
         ]}
       />
 
-      <ForumShell activeSlug={slug}>
+      <ForumShellWithCounts activeSlug={slug}>
         <div className="mx-auto max-w-[1000px]">
 
         {/* COMMUNITY HEADER */}
@@ -685,7 +685,7 @@ export default async function CategoryPage({
         </div>
 
       </div>
-      </ForumShell>
+      </ForumShellWithCounts>
     </>
   )
 }

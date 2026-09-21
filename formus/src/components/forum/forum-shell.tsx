@@ -5,11 +5,13 @@ import MobileNav from './mobile-nav'
 type ForumShellProps = {
   children: React.ReactNode
   activeSlug?: string
+  counts?: Record<string, number>
 }
 
 export default function ForumShell({
   children,
   activeSlug,
+  counts = {},
 }: ForumShellProps) {
   return (
     <div
@@ -29,6 +31,7 @@ export default function ForumShell({
         <div className="hidden md:block">
           <CommunitySidebar
             activeSlug={activeSlug}
+            counts={counts}
           />
         </div>
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import ForumShell from '@/components/forum/forum-shell'
+import ForumShellWithCounts from '@/components/forum/forum-shell-with-counts'
 import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
@@ -266,7 +266,7 @@ export default async function HomePage({
     <>
       <RealtimeRefresh />
 
-      <ForumShell>
+      <ForumShellWithCounts>
         <div className="mx-auto max-w-4xl">
 
         {/* HEADER */}
@@ -632,7 +632,7 @@ export default async function HomePage({
         </div>
 
       </div>
-      </ForumShell>
+      </ForumShellWithCounts>
     </>
   )
 }
