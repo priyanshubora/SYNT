@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+import { createClient } from '@/lib/supabase/server'
+
 const communities = [
   { name: 'Esports', slug: 'esports' },
   { name: 'BGMI', slug: 'bgmi' },
@@ -9,22 +11,43 @@ const communities = [
   { name: 'Off-Topic / Lounge', slug: 'offtopic' },
 ]
 
-const counts: Record<string, number> = {
-  esports: 0,
-  bgmi: 12,
-  valorant: 0,
-  chess: 0,
-  'free-fire': 1,
-  offtopic: 0,
-}
-
 type CommunitySidebarProps = {
   activeSlug?: string
 }
 
-export default function CommunitySidebar({
+export default async function CommunitySidebar({
   activeSlug,
 }: CommunitySidebarProps) {
+  const supabase = await createClient()
+
+  // Fetch thread counts for each category
+  const counts: Record<string, number> = {}
+
+  await Promise.all(
+    communities.map(async (community) => {
+      // Normalize slug (offtopic vs off-topic)
+      const normalizedSlug =
+        community.slug === 'offtopic' ? 'off-topic' : community.slug
+
+      const { data: category } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', normalizedSlug)
+        .maybeSingle()
+
+      if (category) {
+        const { count } = await supabase
+          .from('threads')
+          .select('*', { count: 'exact', head: true })
+          .eq('category_id', category.id)
+          .is('deleted_at', null)
+
+        counts[community.slug] = count ?? 0
+      } else {
+        counts[community.slug] = 0
+      }
+    })
+  )
 
   return (
     <aside className="w-[224px] shrink-0 px-4 pt-6">
