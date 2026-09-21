@@ -1,7 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -99,6 +104,9 @@ export default function NotificationBell() {
   const [notifications, setNotifications] =
     useState<Notification[]>([])
 
+  const [unreadCount, setUnreadCount] =
+    useState(0)
+
   const [loading, setLoading] =
     useState(false)
 
@@ -107,78 +115,134 @@ export default function NotificationBell() {
       null,
     )
 
-  const unreadCount =
-    notifications.filter(
-      (notification) =>
-        !notification.is_read,
-    ).length
+  const loadUnreadCount = useCallback(
+    async () => {
+      const supabase = createClient()
 
-  async function loadNotifications() {
-    setLoading(true)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    const supabase = createClient()
+      if (!user) {
+        setUnreadCount(0)
+        return
+      }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setNotifications([])
-      setLoading(false)
-      return
-    }
-
-    const { data, error } =
-      await supabase
+      const { count, error } = await supabase
         .from('notifications')
-        .select(
-          `
-            id,
-            type,
-            thread_id,
-            comment_id,
-            message,
-            is_read,
-            created_at
-          `,
-        )
-        .eq('user_id', user.id)
-        .order('created_at', {
-          ascending: false,
+        .select('id', {
+          count: 'exact',
+          head: true,
         })
-        .limit(30)
+        .eq('user_id', user.id)
+        .eq('is_read', false)
 
-    if (error) {
-      console.error(
-        'Notifications loading failed:',
-        error,
+      if (!error) {
+        setUnreadCount(count ?? 0)
+      }
+    },
+    [],
+  )
+
+  const loadNotifications = useCallback(
+    async (quiet = false) => {
+      if (!quiet) {
+        setLoading(true)
+      }
+
+      const supabase = createClient()
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setNotifications([])
+        setLoading(false)
+        return
+      }
+
+      const { data, error } =
+        await supabase
+          .from('notifications')
+          .select(
+            `
+              id,
+              type,
+              thread_id,
+              comment_id,
+              message,
+              is_read,
+              created_at
+            `,
+          )
+          .eq('user_id', user.id)
+          .order('created_at', {
+            ascending: false,
+          })
+          .limit(12)
+
+      if (error) {
+        console.error(
+          'Notifications loading failed:',
+          error,
+        )
+
+        setLoading(false)
+        return
+      }
+
+      setNotifications(
+        data ?? [],
       )
-
       setLoading(false)
-      return
-    }
-
-    setNotifications(
-      data ?? [],
-    )
-
-    setLoading(false)
-  }
+    },
+    [],
+  )
 
   useEffect(() => {
-    loadNotifications()
+    let subscription: any = null
 
-    const interval =
-      window.setInterval(
-        loadNotifications,
-        30000,
-      )
+    async function setupRealtime() {
+      const supabase = createClient()
 
-    return () =>
-      window.clearInterval(
-        interval,
-      )
-  }, [])
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        return
+      }
+
+      await loadUnreadCount()
+      await loadNotifications(true)
+
+      subscription = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          async () => {
+            await loadUnreadCount()
+            await loadNotifications(true)
+          },
+        )
+        .subscribe()
+    }
+
+    setupRealtime()
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
+  }, [loadNotifications, loadUnreadCount])
 
   useEffect(() => {
     function handleOutsideClick(
@@ -232,6 +296,10 @@ export default function NotificationBell() {
               : notification,
         ),
     )
+
+    setUnreadCount((current) =>
+      Math.max(0, current - 1),
+    )
   }
 
   async function markAllAsRead() {
@@ -261,6 +329,8 @@ export default function NotificationBell() {
           }),
         ),
     )
+
+    setUnreadCount(0)
   }
 
   return (
@@ -277,7 +347,8 @@ export default function NotificationBell() {
           )
 
           if (!open) {
-            loadNotifications()
+            loadUnreadCount()
+            loadNotifications(true)
           }
         }}
         className="relative flex h-9 w-9 items-center justify-center border border-transparent text-[17px] transition hover:border-[#252525] hover:bg-[#111]"
