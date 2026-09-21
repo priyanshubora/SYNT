@@ -25,7 +25,7 @@ export default function BootSplash() {
         'snyt-boot-splash-seen',
         '1',
       )
-    }, 1800)
+    }, 1100)
 
     return () => {
       window.clearTimeout(timer)
@@ -39,13 +39,11 @@ export default function BootSplash() {
 
   return (
     <div className="boot-splash" aria-live="polite">
-      <div className="boot-splash__logo-wrap">
-        <img
-          src="/snytlogoheadbar.png"
-          alt="SNYT logo"
-          className="boot-splash__logo"
-        />
-      </div>
+      <img
+        src="/snytlogoheadbar.png"
+        alt="SNYT logo"
+        className="boot-splash__logo"
+      />
     </div>
   )
 }

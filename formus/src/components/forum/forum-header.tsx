@@ -20,7 +20,6 @@ export default function ForumHeader() {
   const [username, setUsername] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
-  const isHomeActive = pathname === '/'
   const isForumsActive =
     pathname?.startsWith('/category') ||
     pathname?.startsWith('/thread') ||
@@ -87,127 +86,110 @@ export default function ForumHeader() {
   }
 
   return (
-    <header className="forum-header h-[52px] bg-black text-white sm:h-[56px]">
-      <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between px-3 sm:px-4">
+    <header className="forum-header border-b border-white/10 bg-black text-white">
+      <div className="mx-auto flex h-[56px] max-w-[1400px] items-center justify-between px-3 sm:px-4">
         {/* LEFT */}
-        <div className="flex h-full items-center gap-3 sm:gap-8">
+        <div className="flex h-full items-center gap-3 sm:gap-6">
           <Link
             href="/"
-            className="flex h-full items-center"
+            className="flex h-full items-center pr-2"
           >
             <img
               src="/snytlogoheadbar.png"
               alt="SNYT"
-              className="h-[42px] w-auto object-contain sm:h-[45px] md:h-[48px]"
+              className="h-[38px] w-auto object-contain sm:h-[42px] md:h-[44px]"
             />
           </Link>
 
-          <nav className="flex h-full items-center gap-6 text-[12px] font-medium">
-            <Link
-              href="/"
-              prefetch={true}
-              className={`relative flex h-full items-center transition-opacity ${
-                isHomeActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
-              }`}
-            >
-              Home
-
-              {isHomeActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
-              ) : null}
-            </Link>
-
+          <nav className="flex h-full items-center">
             <Link
               href="/category/offtopic"
               prefetch={true}
-              className={`relative flex h-full items-center transition-opacity ${
-                isForumsActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              className={`relative flex h-full items-center px-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all ${
+                isForumsActive
+                  ? 'text-[#f2f7f0]'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
-              Forums
-
+              <span>Forums</span>
               {isForumsActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#74A662]" />
               ) : null}
             </Link>
+
+            <span className="h-5 w-px bg-white/15" aria-hidden="true" />
 
             <Link
               href="/rules"
               prefetch={true}
-              className={`relative flex h-full items-center transition-opacity ${
-                isRulesActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              className={`relative flex h-full items-center px-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all ${
+                isRulesActive
+                  ? 'text-[#f2f7f0]'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
-              Rules
-
+              <span>Rules</span>
               {isRulesActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#74A662]" />
               ) : null}
             </Link>
+
+            <span className="h-5 w-px bg-white/15" aria-hidden="true" />
 
             <Link
               href="/about"
               prefetch={true}
-              className={`relative flex h-full items-center transition-opacity ${
-                isAboutActive ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+              className={`relative flex h-full items-center px-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all ${
+                isAboutActive
+                  ? 'text-[#f2f7f0]'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
-              About
-
+              <span>About</span>
               {isAboutActive ? (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#74A662]" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#74A662]" />
               ) : null}
             </Link>
           </nav>
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-3">
-          {/* NOTIFICATIONS */}
-          <NotificationBell />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center divide-x divide-white/10 rounded-full border border-white/10 bg-white/[0.02] p-1">
+            <NotificationBell />
 
-          {/* THEME */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            title={
-              darkMode
-                ? 'Switch to light mode'
-                : 'Switch to dark mode'
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#286cff] text-[17px] transition hover:bg-[#286cff] hover:text-white"
-          >
-            {darkMode ? '☀' : '☾'}
-          </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              title={
+                darkMode ? 'Switch to light mode' : 'Switch to dark mode'
+              }
+              className="flex h-8 w-8 items-center justify-center text-[15px] text-white/80 transition hover:text-white"
+            >
+              {darkMode ? '☀' : '☾'}
+            </button>
+          </div>
 
-          {/* PROFILE */}
           <Link
             href="/profile"
             prefetch={true}
             onMouseEnter={() => router.prefetch('/profile')}
             onFocus={() => router.prefetch('/profile')}
-            className="flex items-center gap-2"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] transition hover:border-white/20 hover:bg-white/[0.05]"
+            aria-label="Profile"
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
-                alt={username}
+                alt="Profile"
                 className="h-7 w-7 rounded-full object-cover"
               />
             ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#26303d] text-[11px] text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#74A662]/40 bg-[#74A662]/12 text-[11px] font-bold text-[#dff5d6]">
                 {username.charAt(0).toUpperCase()}
               </span>
             )}
-
-            <span className="hidden max-w-[100px] truncate text-[12px] font-semibold sm:block">
-              {username}
-            </span>
-
-            <span className="text-[10px] opacity-50">
-              ▼
-            </span>
           </Link>
         </div>
       </div>
