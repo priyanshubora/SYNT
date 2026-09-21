@@ -144,12 +144,17 @@ export default function ReportButton({
 
       {open && (
         <div
-          className="absolute right-0 z-50 mt-2 w-[280px] border p-4 shadow-lg"
+          className="absolute left-0 top-full z-[60] mt-2 w-[300px] border p-4 shadow-2xl"
           style={{
             background:
               'var(--surface)',
             borderColor:
               'var(--border)',
+            borderRadius: '12px',
+            boxShadow:
+              '0 18px 40px rgba(0,0,0,0.28)',
+            maxHeight: 'min(70vh, 420px)',
+            overflowY: 'auto',
           }}
         >
           <div
