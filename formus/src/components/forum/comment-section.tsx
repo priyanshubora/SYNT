@@ -865,7 +865,7 @@ export default function CommentSection({
 
                   {/* ACTIONS */}
 
-                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <div className="mt-3 flex flex-wrap items-center gap-3 sm:gap-4">
 
                     <CommentVoteButtons
                       commentId={

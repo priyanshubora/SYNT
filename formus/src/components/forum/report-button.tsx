@@ -182,15 +182,25 @@ export default function ReportButton({
             describes the problem.
           </p>
 
-          <div className="mt-3 space-y-1">
+          <div className="mt-3 flex flex-wrap gap-2">
             {reasons.map(
               (item) => (
                 <label
                   key={item.value}
-                  className="flex cursor-pointer items-center gap-2 py-1 text-xs"
+                  className="flex cursor-pointer items-center gap-1.5 rounded border px-2 py-1 text-[10px]"
                   style={{
                     color:
-                      'var(--text-secondary)',
+                      reason === item.value
+                        ? 'var(--accent)'
+                        : 'var(--text-secondary)',
+                    borderColor:
+                      reason === item.value
+                        ? 'var(--accent)'
+                        : 'var(--border)',
+                    background:
+                      reason === item.value
+                        ? 'var(--accent-soft)'
+                        : 'transparent',
                   }}
                 >
                   <input
