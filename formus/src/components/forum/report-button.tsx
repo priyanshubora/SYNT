@@ -144,21 +144,21 @@ export default function ReportButton({
 
       {open && (
         <div
-          className="absolute left-0 top-full z-[60] mt-2 w-[300px] border p-4 shadow-2xl"
+          className="absolute left-0 top-full z-[60] mt-2 w-[260px] border p-3 shadow-2xl"
           style={{
             background:
               'var(--surface)',
             borderColor:
               'var(--border)',
-            borderRadius: '12px',
+            borderRadius: '10px',
             boxShadow:
-              '0 18px 40px rgba(0,0,0,0.28)',
-            maxHeight: 'min(70vh, 420px)',
+              '0 16px 30px rgba(0,0,0,0.22)',
+            maxHeight: 'min(70vh, 360px)',
             overflowY: 'auto',
           }}
         >
           <div
-            className="text-xs font-bold"
+            className="text-[11px] font-bold"
             style={{
               color:
                 'var(--text-primary)',
@@ -172,7 +172,7 @@ export default function ReportButton({
           </div>
 
           <p
-            className="mt-1 text-[10px]"
+            className="mt-1 text-[10px] leading-4"
             style={{
               color:
                 'var(--text-muted)',
@@ -182,12 +182,12 @@ export default function ReportButton({
             describes the problem.
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {reasons.map(
               (item) => (
                 <label
                   key={item.value}
-                  className="flex cursor-pointer items-center gap-1.5 rounded border px-2 py-1 text-[10px]"
+                  className="flex cursor-pointer items-center gap-1.5 rounded border px-2 py-1 text-[10px] leading-none"
                   style={{
                     color:
                       reason === item.value

@@ -76,6 +76,9 @@ export default function ThreadActions({
   const [error, setError] =
     useState('')
 
+  const [statusMessage, setStatusMessage] =
+    useState('')
+
   const isModerator =
     role === 'moderator' ||
     role === 'admin'
@@ -198,8 +201,15 @@ export default function ThreadActions({
       return
     }
 
-    router.push('/')
-    router.refresh()
+    setStatusMessage(
+      'Thread deleted. Redirecting home...',
+    )
+    setConfirmingDelete(false)
+
+    window.setTimeout(() => {
+      router.replace('/')
+      router.refresh()
+    }, 700)
   }
 
   function openModerationAction(
@@ -334,6 +344,22 @@ export default function ThreadActions({
 
   return (
     <div className="mt-4">
+      {statusMessage && (
+        <div
+          className="mb-3 border px-3 py-2 text-[11px] font-semibold"
+          style={{
+            background:
+              'var(--accent-soft)',
+            borderColor:
+              'var(--border)',
+            color:
+              'var(--accent)',
+          }}
+        >
+          {statusMessage}
+        </div>
+      )}
+
       {isAuthor &&
         !isDeleted && (
           <>

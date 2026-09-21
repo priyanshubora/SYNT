@@ -15,6 +15,7 @@ select
   t.content,
   t.created_at,
   t.updated_at,
+  t.deleted_at,
 
   t.category_id,
   c.name as category_name,

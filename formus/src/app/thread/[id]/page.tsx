@@ -1,5 +1,8 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import {
+  notFound,
+  redirect,
+} from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
 import RealtimeRefresh from '@/components/forum/realtime-refresh'
@@ -102,6 +105,10 @@ export default async function ThreadPage({
 
   if (threadError || !thread) {
     notFound()
+  }
+
+  if (thread.deleted_at) {
+    redirect('/')
   }
 
   /*
