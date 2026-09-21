@@ -1,0 +1,112 @@
+import { NextResponse } from 'next/server'
+
+import { createClient } from '@/lib/supabase/server'
+
+const ALLOWED_ROLES = ['user', 'moderator'] as const
+
+type AllowedRole = (typeof ALLOWED_ROLES)[number]
+
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'You must be logged in.' },
+        { status: 401 },
+      )
+    }
+
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!currentProfile || currentProfile.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Only admins can manage moderators.' },
+        { status: 403 },
+      )
+    }
+
+    const body = await request.json()
+
+    const targetUserId =
+      typeof body.userId === 'string' ? body.userId : ''
+
+    const newRole =
+      typeof body.role === 'string' ? body.role : ''
+
+    if (!targetUserId) {
+      return NextResponse.json(
+        { error: 'User ID is required.' },
+        { status: 400 },
+      )
+    }
+
+    if (!ALLOWED_ROLES.includes(newRole as AllowedRole)) {
+      return NextResponse.json(
+        { error: 'Invalid role.' },
+        { status: 400 },
+      )
+    }
+
+    if (targetUserId === user.id) {
+      return NextResponse.json(
+        { error: 'You cannot change your own admin role.' },
+        { status: 400 },
+      )
+    }
+
+    const { data: targetProfile } = await supabase
+      .from('profiles')
+      .select('id, username, role')
+      .eq('id', targetUserId)
+      .single()
+
+    if (!targetProfile) {
+      return NextResponse.json(
+        { error: 'User not found.' },
+        { status: 404 },
+      )
+    }
+
+    if (targetProfile.role === 'admin') {
+      return NextResponse.json(
+        { error: 'Admin accounts cannot be changed from this page.' },
+        { status: 400 },
+      )
+    }
+
+    const { data: updatedProfile, error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', targetUserId)
+      .select('id, username, role')
+      .single()
+
+    if (error) {
+      console.error('Moderator role update failed:', error)
+      return NextResponse.json(
+        { error: error.message || 'Unable to update role.' },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: updatedProfile,
+    })
+  } catch (error) {
+    console.error('Moderator API error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error.' },
+      { status: 500 },
+    )
+  }
+}

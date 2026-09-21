@@ -1,5 +1,4 @@
 'use client'
-
 import Link from 'next/link'
 import {
   useEffect,
@@ -12,7 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 
 import CommentVoteButtons from './comment-vote-buttons'
 import CommentActions from './comment-actions'
-
+import ReportButton from '@/components/forum/report-button'
 type Comment = {
   id: string
   thread_id: string
@@ -25,6 +24,7 @@ type Comment = {
   author_avatar_url: string | null
   team_name: string | null
   team_logo_url: string | null
+  author_role: 'user' | 'moderator' | 'admin'
   score: number
   userVote: number | null
 }
@@ -37,6 +37,8 @@ type CommentSectionProps = {
   currentPage: number
   totalPages: number
   highlightedCommentId: string | null
+  isLocked: boolean
+  currentUserRole: 'user' | 'moderator' | 'admin'
 }
 
 function timeAgo(dateString: string) {
@@ -91,6 +93,8 @@ export default function CommentSection({
   currentPage,
   totalPages,
   highlightedCommentId,
+  isLocked,
+  currentUserRole,
 }: CommentSectionProps) {
   const router = useRouter()
 
@@ -675,6 +679,19 @@ export default function CommentSection({
                       }
                     </span>
 
+                    {comment.author_role !== 'user' && (
+                      <span
+                        className="border px-1.5 py-0.5 text-[8px] font-bold uppercase"
+                        style={{
+                          background: 'var(--accent-soft)',
+                          borderColor: 'var(--border)',
+                          color: 'var(--accent)',
+                        }}
+                      >
+                        {comment.author_role}
+                      </span>
+                    )}
+
                     {comment.team_name && (
                       <span
                         className="inline-flex items-center gap-1.5 border px-1.5 py-0.5 text-[9px] font-bold"
@@ -762,6 +779,77 @@ export default function CommentSection({
                     }
                   />
 
+                  <div className="mt-2 flex flex-wrap items-center gap-4">
+                    {currentUserRole !== 'user' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const reason =
+                              window.prompt(
+                                'Reason for deleting this comment:',
+                              )
+
+                            if (!reason?.trim()) {
+                              return
+                            }
+
+                            const response =
+                              await fetch(
+                                '/api/moderation/action',
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type':
+                                      'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    action:
+                                      'delete_comment',
+                                    targetType:
+                                      'comment',
+                                    targetId:
+                                      comment.id,
+                                    reason:
+                                      reason.trim(),
+                                  }),
+                                },
+                              )
+
+                            if (!response.ok) {
+                              const data =
+                                await response
+                                  .json()
+                                  .catch(
+                                    () => null,
+                                  )
+
+                              window.alert(
+                                data?.error ||
+                                  'Moderation action failed.',
+                              )
+
+                              return
+                            }
+
+                            router.refresh()
+                          }}
+                          className="text-[10px] font-semibold text-red-500 hover:underline"
+                        >
+                          Mod: Delete
+                        </button>
+                      </>
+                    )}
+
+                    <ReportButton
+                      targetType="comment"
+                      targetId={comment.id}
+                      currentUserId={
+                        currentUserId
+                      }
+                    />
+                  </div>
+
                   {/* ACTIONS */}
 
                   <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -785,13 +873,14 @@ export default function CommentSection({
                           comment.id,
                         )
                       }
-                      className="text-xs font-semibold transition hover:opacity-70"
+                      disabled={isLocked}
+                      className="text-xs font-semibold transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
                       style={{
                         color:
                           'var(--text-muted)',
                       }}
                     >
-                      Reply
+                      {isLocked ? 'Locked' : 'Reply'}
                     </button>
 
                     <button
@@ -1110,7 +1199,18 @@ export default function CommentSection({
         }}
       >
 
-        {!currentUserId ? (
+        {isLocked ? (
+          <div
+            className="border px-4 py-3 text-sm"
+            style={{
+              background: 'var(--surface-secondary)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-muted)',
+            }}
+          >
+            🔒 This discussion is locked. New comments and replies are disabled.
+          </div>
+        ) : !currentUserId ? (
           <button
             type="button"
             onClick={() =>

@@ -7,6 +7,7 @@ import VoteButtons from '@/components/forum/vote-buttons'
 import CommentSection from '@/components/forum/comment-section'
 import ThreadActions from '@/components/forum/thread-actions'
 import ShareButton from '@/components/forum/share-button'
+import ReportButton from '@/components/forum/report-button'
 
 import { createClient } from '@/lib/supabase/server'
 
@@ -147,6 +148,7 @@ export default async function ThreadPage({
       `,
     )
     .eq('thread_id', id)
+    .is('deleted_at', null)
     .order('created_at', {
       ascending: true,
     })
@@ -311,7 +313,7 @@ export default async function ThreadPage({
       ? supabase
           .from('profiles')
           .select(
-            'id, username, avatar_url, team_id',
+            'id, username, avatar_url, team_id, role',
           )
           .in('id', authorIds)
       : Promise.resolve({ data: [] })
@@ -423,6 +425,13 @@ export default async function ThreadPage({
               )?.value ?? null
             : null
 
+        const authorRole: 'user' | 'moderator' | 'admin' =
+          profile?.role === 'admin'
+            ? 'admin'
+            : profile?.role === 'moderator'
+              ? 'moderator'
+              : 'user'
+
         return {
           id: comment.id,
           thread_id:
@@ -443,6 +452,8 @@ export default async function ThreadPage({
           author_avatar_url:
             profile?.avatar_url ??
             null,
+          author_role:
+            authorRole,
           team_name:
             team?.name ?? null,
           team_logo_url:
@@ -462,11 +473,40 @@ export default async function ThreadPage({
     thread.author_username ??
     'User'
 
+  const authorRole =
+    thread.author_role === 'admin'
+      ? 'admin'
+      : thread.author_role === 'moderator'
+        ? 'moderator'
+        : 'user'
+
   const authorTeamName =
     thread.team_name ?? null
 
   const authorTeamLogoUrl =
     thread.team_logo_url ?? null
+
+  let currentUserRole:
+    | 'user'
+    | 'moderator'
+    | 'admin' = 'user'
+
+  if (user) {
+    const { data: currentProfile } =
+      await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+    if (currentProfile?.role === 'admin') {
+      currentUserRole = 'admin'
+    } else if (
+      currentProfile?.role === 'moderator'
+    ) {
+      currentUserRole = 'moderator'
+    }
+  }
 
   return (
     <>
@@ -581,15 +621,33 @@ export default async function ThreadPage({
             {/* AUTHOR */}
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span
-                className="text-sm font-bold"
-                style={{
-                  color:
-                    'var(--text-primary)',
-                }}
-              >
-                {authorUsername}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="text-sm font-bold"
+                  style={{
+                    color:
+                      'var(--text-primary)',
+                  }}
+                >
+                  {authorUsername}
+                </span>
+
+                {authorRole !== 'user' && (
+                  <span
+                    className="border px-1.5 py-0.5 text-[8px] font-bold uppercase"
+                    style={{
+                      background:
+                        'var(--accent-soft)',
+                      borderColor:
+                        'var(--border)',
+                      color:
+                        'var(--accent)',
+                    }}
+                  >
+                    {authorRole}
+                  </span>
+                )}
+              </div>
 
               {authorTeamName && (
                 <span
@@ -620,6 +678,19 @@ export default async function ThreadPage({
               )}
             </div>
           </div>
+
+          {thread.is_locked && (
+            <div
+              className="border-b px-5 py-2.5 text-[11px] font-semibold sm:px-6"
+              style={{
+                background: 'var(--accent-soft)',
+                borderColor: 'var(--border)',
+                color: 'var(--accent)',
+              }}
+            >
+              🔒 This discussion is locked. New comments and replies are disabled.
+            </div>
+          )}
 
           {/* THREAD CONTENT */}
 
@@ -721,6 +792,14 @@ export default async function ThreadPage({
                   thread.title
                 }
               />
+
+              <ReportButton
+                targetType="thread"
+                targetId={thread.id}
+                currentUserId={
+                  user?.id ?? null
+                }
+              />
             </div>
           </div>
         </article>
@@ -744,6 +823,12 @@ export default async function ThreadPage({
           }
           highlightedCommentId={
             commentId ?? null
+          }
+          isLocked={
+            Boolean(thread.is_locked)
+          }
+          currentUserRole={
+            currentUserRole
           }
         />
       </div>

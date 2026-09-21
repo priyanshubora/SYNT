@@ -22,6 +22,7 @@ select
 
   t.author_id,
   p.username as author_username,
+  p.role as author_role,
 
   tm.name as team_name,
 
