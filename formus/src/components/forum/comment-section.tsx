@@ -661,47 +661,79 @@ export default function CommentSection({
                       }
                     </span>
 
-                    {comment.author_role !== 'user' && (
-                      <span
-                        className="border px-1.5 py-0.5 text-[8px] font-bold uppercase"
-                        style={{
-                          background: 'var(--accent-soft)',
-                          borderColor: 'var(--border)',
-                          color: 'var(--accent)',
-                        }}
-                      >
-                        {comment.author_role}
-                      </span>
-                    )}
-
-                    {comment.team_name && (
-                      <span
-                        className="inline-flex items-center gap-1.5 border px-1.5 py-0.5 text-[9px] font-bold"
-                        style={{
-                          background:
-                            'var(--accent-soft)',
-                          borderColor:
-                            'var(--border)',
-                          color:
-                            'var(--accent)',
-                        }}
-                      >
-                        {comment.team_logo_url && (
-                          <img
-                            src={
-                              comment.team_logo_url
-                            }
-                            alt=""
-                            className="h-4 w-4 object-contain"
-                          />
-                        )}
-
-                        <span>
-                          {
-                            comment.team_name
-                          }
+                    {comment.author_role !== 'user' ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="border px-1.5 py-0.5 text-[8px] font-bold uppercase"
+                          style={{
+                            background: 'var(--accent-soft)',
+                            borderColor: 'var(--border)',
+                            color: 'var(--accent)',
+                          }}
+                        >
+                          {comment.author_role}
                         </span>
+
+                        {comment.team_name && (
+                          <span
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap border px-1.5 py-0.5 text-[9px] font-bold"
+                            style={{
+                              background:
+                                'var(--accent-soft)',
+                              borderColor:
+                                'var(--border)',
+                              color:
+                                'var(--accent)',
+                            }}
+                          >
+                            {comment.team_logo_url && (
+                              <img
+                                src={
+                                  comment.team_logo_url
+                                }
+                                alt=""
+                                className="h-4 w-4 object-contain"
+                              />
+                            )}
+
+                            <span>
+                              {
+                                comment.team_name
+                              }
+                            </span>
+                          </span>
+                        )}
                       </span>
+                    ) : (
+                      comment.team_name && (
+                        <span
+                          className="inline-flex items-center gap-1.5 whitespace-nowrap border px-1.5 py-0.5 text-[9px] font-bold"
+                          style={{
+                            background:
+                              'var(--accent-soft)',
+                            borderColor:
+                              'var(--border)',
+                            color:
+                              'var(--accent)',
+                          }}
+                        >
+                          {comment.team_logo_url && (
+                            <img
+                              src={
+                                comment.team_logo_url
+                              }
+                              alt=""
+                              className="h-4 w-4 object-contain"
+                            />
+                          )}
+
+                          <span>
+                            {
+                              comment.team_name
+                            }
+                          </span>
+                        </span>
+                      )
                     )}
 
                     <span
