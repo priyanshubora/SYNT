@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 type ProfilePageProps = {
   searchParams: Promise<{
     view?: string
+    page?: string
   }>
 }
 
@@ -18,12 +19,20 @@ type UserRole =
 export default async function ProfilePage({
   searchParams,
 }: ProfilePageProps) {
-  const { view } = await searchParams
+  const { view, page } = await searchParams
 
   const activeView =
     view === 'comments' || view === 'rank'
       ? view
       : 'threads'
+
+  const PAGE_SIZE = 30
+  const requestedPage = Number(page ?? '1')
+  const currentPage =
+    Number.isInteger(requestedPage) &&
+      requestedPage > 0
+      ? requestedPage
+      : 1
 
   const supabase = await createClient()
 
@@ -76,6 +85,36 @@ export default async function ProfilePage({
     teamName = team?.name ?? null
   }
 
+  const {
+    count: totalThreadsCount,
+  } = await supabase
+    .from('thread_stats')
+    .select('*', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('author_id', user.id)
+
+  const {
+    count: totalCommentsCount,
+  } = await supabase
+    .from('comments')
+    .select('*', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('author_id', user.id)
+    .is('deleted_at', null)
+
+  const threadTotalPages = Math.max(
+    1,
+    Math.ceil((totalThreadsCount ?? 0) / PAGE_SIZE),
+  )
+  const commentTotalPages = Math.max(
+    1,
+    Math.ceil((totalCommentsCount ?? 0) / PAGE_SIZE),
+  )
+
   const { data: threads } =
     await supabase
       .from('thread_stats')
@@ -94,7 +133,10 @@ export default async function ProfilePage({
       .order('created_at', {
         ascending: false,
       })
-      .limit(30)
+      .range(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE - 1,
+      )
 
   const { data: comments } =
     await supabase
@@ -112,7 +154,10 @@ export default async function ProfilePage({
       .order('created_at', {
         ascending: false,
       })
-      .limit(30)
+      .range(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE - 1,
+      )
 
   const isModerator =
     role === 'moderator' ||
@@ -160,11 +205,11 @@ export default async function ProfilePage({
                     className="flex h-20 w-20 items-center justify-center rounded-full border text-2xl font-bold"
                     style={{
                       background:
-                        'var(--accent-soft)',
+                        '#eef6ee',
                       borderColor:
                         'var(--border)',
                       color:
-                        'var(--accent)',
+                        '#74A662',
                     }}
                   >
                     {profile.username
@@ -189,11 +234,11 @@ export default async function ProfilePage({
                   className="mx-auto mt-2 inline-block border px-2 py-1 text-[9px] font-bold"
                   style={{
                     background:
-                      'var(--accent-soft)',
+                      '#eef6ee',
                     borderColor:
                       'var(--border)',
                     color:
-                      'var(--accent)',
+                      '#74A662',
                   }}
                 >
                   {teamName}
@@ -205,11 +250,11 @@ export default async function ProfilePage({
                   className="mx-auto mt-2 inline-block border px-2 py-1 text-[9px] font-bold uppercase"
                   style={{
                     background:
-                      'var(--accent-soft)',
+                      '#eef6ee',
                     borderColor:
                       'var(--border)',
                     color:
-                      'var(--accent)',
+                      '#74A662',
                   }}
                 >
                   {role}
@@ -237,11 +282,11 @@ export default async function ProfilePage({
                 style={{
                   background:
                     activeView === 'threads'
-                      ? 'var(--accent-soft)'
+                      ? '#eef6ee'
                       : 'transparent',
                   color:
                     activeView === 'threads'
-                      ? 'var(--accent)'
+                      ? '#74A662'
                       : 'var(--text-secondary)',
                 }}
               >
@@ -258,11 +303,11 @@ export default async function ProfilePage({
                 style={{
                   background:
                     activeView === 'comments'
-                      ? 'var(--accent-soft)'
+                      ? '#eef6ee'
                       : 'transparent',
                   color:
                     activeView === 'comments'
-                      ? 'var(--accent)'
+                      ? '#74A662'
                       : 'var(--text-secondary)',
                 }}
               >
@@ -279,11 +324,11 @@ export default async function ProfilePage({
                 style={{
                   background:
                     activeView === 'rank'
-                      ? 'var(--accent-soft)'
+                      ? '#eef6ee'
                       : 'transparent',
                   color:
                     activeView === 'rank'
-                      ? 'var(--accent)'
+                      ? '#74A662'
                       : 'var(--text-secondary)',
                 }}
               >
@@ -348,7 +393,7 @@ export default async function ProfilePage({
                     <span
                       style={{
                         color:
-                          'var(--accent)',
+                          '#74A662',
                       }}
                     >
                       →
@@ -371,7 +416,7 @@ export default async function ProfilePage({
                       <span
                         style={{
                           color:
-                            'var(--accent)',
+                            '#74A662',
                         }}
                       >
                         →
@@ -518,10 +563,10 @@ export default async function ProfilePage({
                   className="mt-1 text-sm font-bold"
                   style={{
                     color:
-                      'var(--accent)',
+                      '#74A662',
                   }}
                 >
-                  Unranked
+                  Coming Soon
                 </div>
               </div>
             </div>
@@ -567,7 +612,7 @@ export default async function ProfilePage({
                               <span
                                 style={{
                                   color:
-                                    'var(--accent)',
+                                    '#74A662',
                                 }}
                               >
                                 {
@@ -641,6 +686,28 @@ export default async function ProfilePage({
                     any threads yet.
                   </div>
                 )}
+
+                {threadTotalPages > 1 && (
+                  <div className="flex items-center justify-between border-t px-5 py-3 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                    <Link
+                      href={`/profile?view=threads&page=${Math.max(1, currentPage - 1)}`}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-40' : 'hover:text-[#74A662]'}
+                    >
+                      Prev
+                    </Link>
+
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      Page {currentPage} / {threadTotalPages}
+                    </span>
+
+                    <Link
+                      href={`/profile?view=threads&page=${Math.min(threadTotalPages, currentPage + 1)}`}
+                      className={currentPage === threadTotalPages ? 'pointer-events-none opacity-40' : 'hover:text-[#74A662]'}
+                    >
+                      Next
+                    </Link>
+                  </div>
+                )}
               </section>
             )}
 
@@ -685,7 +752,7 @@ export default async function ProfilePage({
                           <span
                             style={{
                               color:
-                                'var(--accent)',
+                                '#74A662',
                             }}
                           >
                             Open thread
@@ -727,6 +794,28 @@ export default async function ProfilePage({
                     any comments yet.
                   </div>
                 )}
+
+                {commentTotalPages > 1 && (
+                  <div className="flex items-center justify-between border-t px-5 py-3 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                    <Link
+                      href={`/profile?view=comments&page=${Math.max(1, currentPage - 1)}`}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-40' : 'hover:text-[#74A662]'}
+                    >
+                      Prev
+                    </Link>
+
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      Page {currentPage} / {commentTotalPages}
+                    </span>
+
+                    <Link
+                      href={`/profile?view=comments&page=${Math.min(commentTotalPages, currentPage + 1)}`}
+                      className={currentPage === commentTotalPages ? 'pointer-events-none opacity-40' : 'hover:text-[#74A662]'}
+                    >
+                      Next
+                    </Link>
+                  </div>
+                )}
               </section>
             )}
 
@@ -746,10 +835,10 @@ export default async function ProfilePage({
                   className="text-2xl font-bold"
                   style={{
                     color:
-                      'var(--accent)',
+                      '#74A662',
                   }}
                 >
-                  Unranked
+                  Coming Soon
                 </div>
 
                 <p
@@ -759,12 +848,9 @@ export default async function ProfilePage({
                       'var(--text-muted)',
                   }}
                 >
-                  Ranking will be added
-                  later. Your reputation,
-                  activity, and community
-                  participation can be used
-                  when the ranking system is
-                  built.
+                  The ranking system is in
+                  development and will be
+                  available soon.
                 </p>
               </section>
             )}

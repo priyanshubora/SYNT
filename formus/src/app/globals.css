@@ -55,6 +55,18 @@ body {
     color 0.2s ease;
 }
 
+button,
+input,
+textarea,
+select,
+a,
+[role='button'],
+[class*='rounded'],
+[class*='rounded-'],
+[class*='rounded_'] {
+  border-radius: 0 !important;
+}
+
 .boot-splash {
   position: fixed;
   inset: 0;

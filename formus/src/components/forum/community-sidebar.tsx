@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 const communities = [
-  { name: 'Esports', slug: 'esports' },
-  { name: 'BGMI', slug: 'bgmi' },
-  { name: 'Valorant', slug: 'valorant' },
-  { name: 'Chess', slug: 'chess' },
-  { name: 'Free Fire', slug: 'free-fire' },
-  { name: 'Off-Topic / Lounge', slug: 'offtopic' },
+  { name: 'Esports', slug: 'esports', dot: '#8b5cf6' },
+  { name: 'BGMI', slug: 'bgmi', dot: '#facc15' },
+  { name: 'Valorant', slug: 'valorant', dot: '#ef4444' },
+  { name: 'Chess', slug: 'chess', dot: '#22c55e' },
+  { name: 'Free Fire', slug: 'free-fire', dot: '#3b82f6' },
+  { name: 'Off-Topic / Lounge', slug: 'offtopic', dot: '#7dd3fc' },
 ]
 
 type CommunitySidebarProps = {
@@ -26,11 +26,7 @@ export default function CommunitySidebar({
       </div>
 
       <div
-        className="overflow-hidden rounded-[14px] border"
-        style={{
-          background: 'var(--surface)',
-          borderColor: 'var(--border)',
-        }}
+        className="overflow-hidden rounded-[12px] border border-white/10 bg-[#2a2a2a]"
       >
         {communities.map((community) => {
           const active = community.slug === activeSlug
@@ -41,31 +37,37 @@ export default function CommunitySidebar({
               key={community.slug}
               href={`/category/${community.slug}`}
               prefetch={true}
-              className={`group relative flex h-[39px] items-center justify-between px-4 text-[12px] transition ${
+              className={`group relative flex h-[56px] items-center justify-between px-4 text-[16px] font-medium transition ${
                 active
-                  ? 'mx-1 my-1 rounded-[10px] border border-dashed border-[#74A662] bg-[#eef7ec] text-[#4a7a42] dark:bg-[#23392a] dark:text-[#bfe7c5]'
-                  : 'text-[#667085] hover:bg-[#f7f9fc] dark:text-[#a1a1aa] dark:hover:bg-[#292929]'
+                  ? 'bg-[#3b3b3b] text-white'
+                  : 'border-b border-white/10 text-[#d5d5d5] hover:bg-[#313131]'
+              } ${
+                communities.indexOf(community) === communities.length - 1
+                  ? ''
+                  : 'border-b border-white/10'
               }`}
+              style={
+                active
+                  ? {
+                      boxShadow: `inset -3px 0 0 ${community.dot}`,
+                    }
+                  : undefined
+              }
             >
-              <span className="flex min-w-0 items-center gap-2">
+              <span className="flex min-w-0 items-center gap-3">
                 <span
-                  className={`h-[6px] w-[6px] shrink-0 rounded-full ${
-                    active
-                      ? 'bg-[#74A662]'
-                      : 'bg-[#ccd3dc] dark:bg-[#666]'
-                  }`}
+                  className="h-[10px] w-[10px] shrink-0 rounded-full"
+                  style={{ backgroundColor: community.dot }}
                 />
 
-                <span className="truncate font-medium">
-                  {community.name}
-                </span>
+                <span className="truncate">{community.name}</span>
               </span>
 
               <span
-                className={`ml-2 text-[10px] ${
+                className={`ml-2 text-[11px] font-semibold ${
                   active
-                    ? 'rounded-full bg-[#dfeedb] px-2 py-1 text-[#4a7a42] dark:bg-[#2d4a35] dark:text-[#cfeec8]'
-                    : 'text-[#a1aaba] dark:text-[#777]'
+                    ? 'text-[#d8d8d8]'
+                    : 'text-[#9a9a9a]'
                 }`}
               >
                 {count}
