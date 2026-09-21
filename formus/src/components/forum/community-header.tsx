@@ -32,7 +32,7 @@ export default function CommunityHeader({
       {/* Background Banner Image */}
       <div className="absolute inset-0">
         <Image
-          src="/banner (2).png"
+          src="/banner.png"
           alt="Community banner"
           fill
           className="object-cover"
