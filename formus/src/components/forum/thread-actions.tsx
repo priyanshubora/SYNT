@@ -294,6 +294,9 @@ export default function ThreadActions({
         'delete_thread'
       ) {
         setIsDeleted(true)
+        setStatusMessage(
+          'Thread deleted. Redirecting home...',
+        )
       }
 
       if (
@@ -307,6 +310,7 @@ export default function ThreadActions({
       setPendingAction(null)
       setReason('')
 
+      router.replace('/')
       router.refresh()
     } catch (actionError) {
       setError(
