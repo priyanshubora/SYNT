@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   notFound,
@@ -685,11 +686,13 @@ export default async function ThreadPage({
                   }}
                 >
                   {authorTeamLogoUrl && (
-                    <img
+                    <Image
                       src={
                         authorTeamLogoUrl
                       }
                       alt=""
+                      width={16}
+                      height={16}
                       className="h-4 w-4 object-contain"
                     />
                   )}

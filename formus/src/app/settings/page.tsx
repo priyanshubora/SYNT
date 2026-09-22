@@ -16,19 +16,6 @@ export default async function SettingsPage() {
     redirect('/login?next=/settings')
   }
 
-  const { data: profile } =
-    await supabase
-      .from('profiles')
-      .select(
-        'username, avatar_url',
-      )
-      .eq('id', user.id)
-      .single()
-
-  if (!profile) {
-    redirect('/profile')
-  }
-
   return (
     <ForumShell>
       <div className="mx-auto max-w-[800px]">
@@ -55,12 +42,7 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        <SettingsForm
-          username={profile.username}
-          avatarUrl={
-            profile.avatar_url
-          }
-        />
+        <SettingsForm />
       </div>
     </ForumShell>
   )

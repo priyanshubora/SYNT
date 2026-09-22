@@ -1,26 +1,28 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
+function getInitialVisible(): boolean {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  return window.sessionStorage.getItem('snyt-boot-splash-seen') !== '1'
+}
+
 export default function BootSplash() {
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(getInitialVisible)
 
   useEffect(() => {
-    const hasSeenSplash =
-      window.sessionStorage.getItem(
-        'snyt-boot-splash-seen',
-      )
-
-    if (hasSeenSplash === '1') {
-      setVisible(false)
-      return
+    if (visible) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
     }
-
-    document.body.style.overflow = 'hidden'
 
     const timer = window.setTimeout(() => {
       setVisible(false)
-      document.body.style.overflow = ''
       window.sessionStorage.setItem(
         'snyt-boot-splash-seen',
         '1',
@@ -29,9 +31,8 @@ export default function BootSplash() {
 
     return () => {
       window.clearTimeout(timer)
-      document.body.style.overflow = ''
     }
-  }, [])
+  }, [visible])
 
   if (!visible) {
     return null
@@ -39,9 +40,11 @@ export default function BootSplash() {
 
   return (
     <div className="boot-splash" aria-live="polite">
-      <img
+      <Image
         src="/snytlogoheadbar.png"
         alt="SNYT logo"
+        width={200}
+        height={56}
         className="boot-splash__logo"
       />
     </div>

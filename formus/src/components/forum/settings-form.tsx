@@ -6,11 +6,6 @@ import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
-type SettingsFormProps = {
-  username: string
-  avatarUrl: string | null
-}
-
 type Preferences = {
   upvotes: boolean
   mentions: boolean
@@ -88,10 +83,7 @@ function SettingToggle({
   )
 }
 
-export default function SettingsForm({
-  username,
-  avatarUrl,
-}: SettingsFormProps) {
+export default function SettingsForm() {
   const router = useRouter()
 
   const [preferences, setPreferences] =

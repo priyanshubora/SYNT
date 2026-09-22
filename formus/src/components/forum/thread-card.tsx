@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -96,9 +97,11 @@ export default function ThreadCard({
                 {thread.author_username ?? 'user'}
 
                 {thread.team_logo_url && (
-                  <img
+                  <Image
                     src={thread.team_logo_url}
                     alt=""
+                    width={16}
+                    height={16}
                     className="h-4 w-4 object-contain"
                   />
                 )}

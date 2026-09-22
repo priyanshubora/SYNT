@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -140,9 +141,11 @@ export default function EditProfileForm({
           {/* PROFILE PICTURE */}
           <div className="flex items-center gap-4">
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt={username}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-full object-cover"
               />
             ) : (

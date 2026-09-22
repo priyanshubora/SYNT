@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -191,9 +192,11 @@ export default async function ProfilePage({
             >
               <div className="mx-auto h-20 w-20">
                 {profile.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.username}
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-full border object-cover"
                     style={{
                       borderColor:
@@ -682,7 +685,7 @@ export default async function ProfilePage({
                         'var(--text-muted)',
                     }}
                   >
-                    You haven't created
+                    You haven&apos;t created
                     any threads yet.
                   </div>
                 )}
@@ -790,7 +793,7 @@ export default async function ProfilePage({
                         'var(--text-muted)',
                     }}
                   >
-                    You haven't posted
+                    You haven&apos;t posted
                     any comments yet.
                   </div>
                 )}

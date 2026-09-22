@@ -241,16 +241,6 @@ export default async function HomePage({
     return `/?sort=${currentSort}&page=${targetPage}`
   }
 
-  function sortUrl(
-    targetSort: SortType
-  ) {
-    if (targetSort === 'latest') {
-      return '/'
-    }
-
-    return `/?sort=${targetSort}`
-  }
-
   const showingFrom =
     total === 0
       ? 0

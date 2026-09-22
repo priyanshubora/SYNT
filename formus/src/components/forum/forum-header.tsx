@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import NotificationBell from '@/components/forum/notification-bell'
 import { createClient } from '@/lib/supabase/client'
@@ -27,49 +28,52 @@ export default function ForumHeader() {
   const isRulesActive = pathname === '/rules'
   const isAboutActive = pathname === '/about'
 
+  const loadUser = useCallback(async () => {
+    const supabase = createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.username) {
+      setUsername(profile.username)
+    } else {
+      setUsername(
+        user.user_metadata?.user_name ??
+          user.email?.split('@')[0] ??
+          'User',
+      )
+    }
+
+    setAvatarUrl(
+      user.user_metadata?.avatar_url ??
+        user.user_metadata?.picture ??
+        null,
+    )
+  }, [])
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
+  }, [darkMode])
 
-    async function loadUser() {
-      const supabase = createClient()
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.username) {
-        setUsername(profile.username)
-      } else {
-        setUsername(
-          user.user_metadata?.user_name ??
-            user.email?.split('@')[0] ??
-            'User',
-        )
-      }
-
-      setAvatarUrl(
-        user.user_metadata?.avatar_url ??
-          user.user_metadata?.picture ??
-          null,
-      )
-    }
-
-    loadUser()
-  }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadUser()
+  }, [loadUser])
 
   function toggleTheme() {
     const newDarkMode = !darkMode
@@ -94,10 +98,13 @@ export default function ForumHeader() {
             href="/"
             className="flex h-full items-center pr-2"
           >
-            <img
+            <Image
               src="/snytlogoheadbar.png"
               alt="SNYT"
+              width={120}
+              height={44}
               className="h-[38px] w-auto object-contain sm:h-[42px] md:h-[44px]"
+              priority
             />
           </Link>
 
@@ -180,9 +187,11 @@ export default function ForumHeader() {
             aria-label="Profile"
           >
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt="Profile"
+                width={28}
+                height={28}
                 className="h-7 w-7 rounded-full object-cover"
               />
             ) : (

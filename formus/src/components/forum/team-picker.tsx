@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 
 export type TeamPickerTeam = {
@@ -112,9 +113,11 @@ export default function TeamPicker({
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center">
                   {team.logo_url ? (
-                    <img
+                    <Image
                       src={team.logo_url}
                       alt=""
+                      width={32}
+                      height={32}
                       className="h-8 w-8 object-contain"
                     />
                   ) : (

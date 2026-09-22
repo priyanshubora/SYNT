@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   useEffect,
@@ -687,11 +688,13 @@ export default function CommentSection({
                             }}
                           >
                             {comment.team_logo_url && (
-                              <img
+                              <Image
                                 src={
                                   comment.team_logo_url
                                 }
                                 alt=""
+                                width={16}
+                                height={16}
                                 className="h-4 w-4 object-contain"
                               />
                             )}
@@ -718,11 +721,13 @@ export default function CommentSection({
                           }}
                         >
                           {comment.team_logo_url && (
-                            <img
+                            <Image
                               src={
                                 comment.team_logo_url
                               }
                               alt=""
+                              width={16}
+                              height={16}
                               className="h-4 w-4 object-contain"
                             />
                           )}

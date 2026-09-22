@@ -375,16 +375,6 @@ export default async function CategoryPage({
     return `/category/${slug}?sort=${currentSort}&page=${targetPage}`
   }
 
-  function sortUrl(
-    targetSort: SortType
-  ) {
-    if (targetSort === 'latest') {
-      return `/category/${slug}`
-    }
-
-    return `/category/${slug}?sort=${targetSort}`
-  }
-
   const showingFrom =
     total === 0
       ? 0
@@ -418,7 +408,6 @@ export default async function CategoryPage({
         <CommunityHeader
           name={community.name}
           slug={normalizedSlug}
-          leader={community.leader}
           discussions={liveDiscussions}
           members={liveMembers}
         />

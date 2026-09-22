@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -55,9 +56,12 @@ export default function LoginPage() {
         {/* BRAND */}
         <div className="mb-7 text-center">
           <div className="mb-3 flex justify-center">
-            <img
+            <Image
               src="/snytlogoheadbar.png"
               alt="SNYT logo"
+              width={160}
+              height={56}
+              priority
               className="h-14 w-auto object-contain drop-shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
             />
           </div>

@@ -116,6 +116,18 @@ a,
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .boot-splash {
+    animation-delay: 0s;
+  }
+
+  .boot-splash__logo {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

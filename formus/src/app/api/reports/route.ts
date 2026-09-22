@@ -12,10 +12,6 @@ const VALID_REASONS = [
   'other',
 ] as const
 
-type TargetType =
-  | 'thread'
-  | 'comment'
-
 export async function POST(
   request: Request,
 ) {

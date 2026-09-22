@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 
 type UserRole =
@@ -359,11 +360,13 @@ export default function ModeratorManager({
                 <div className="flex min-w-0 items-center gap-3">
 
                   {user.avatar_url ? (
-                    <img
+                    <Image
                       src={
                         user.avatar_url
                       }
                       alt=""
+                      width={36}
+                      height={36}
                       className="h-9 w-9 shrink-0 rounded-full object-cover"
                     />
                   ) : (

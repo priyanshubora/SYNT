@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
@@ -80,7 +80,7 @@ export default function ModPage() {
     null,
   )
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -239,11 +239,21 @@ export default function ModPage() {
     )
 
     setLoading(false)
-  }
+  }, [
+    router,
+    setRole,
+    setReports,
+    setThreads,
+    setComments,
+    setActions,
+    setLoading,
+    setError,
+  ])
 
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadDashboard()
+  }, [loadDashboard])
 
   async function moderationAction(
     action: string,
