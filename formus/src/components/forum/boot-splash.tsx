@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react'
 
 export default function BootSplash() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window !== 'undefined' && window.sessionStorage.getItem('snyt-boot-splash-seen') === '1') {
-      return false
-    }
-    return true
-  })
+  const [visible, setVisible] = useState(true)
 
   useEffect(() => {
+    const hasSeenSplash =
+      window.sessionStorage.getItem(
+        'snyt-boot-splash-seen',
+      )
+
+    if (hasSeenSplash === '1') {
+      setVisible(false)
+      return
+    }
+
     document.body.style.overflow = 'hidden'
 
     const timer = window.setTimeout(() => {

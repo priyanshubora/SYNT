@@ -4,6 +4,7 @@ import Image from 'next/image'
 type CommunityHeaderProps = {
   name: string
   slug: string
+  leader: string
   discussions: string
   members: string
 }
@@ -21,6 +22,7 @@ const communityLogos: Record<string, string> = {
 export default function CommunityHeader({
   name,
   slug,
+  leader,
   discussions,
   members,
 }: CommunityHeaderProps) {

@@ -242,9 +242,7 @@ export default function ModPage() {
   }
 
   useEffect(() => {
-    setTimeout(() => {
-      loadDashboard()
-    }, 0)
+    loadDashboard()
   }, [])
 
   async function moderationAction(
