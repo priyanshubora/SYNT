@@ -682,7 +682,7 @@ export default async function ProfilePage({
                         'var(--text-muted)',
                     }}
                   >
-                    You haven't created
+                    You have not created
                     any threads yet.
                   </div>
                 )}
@@ -790,7 +790,7 @@ export default async function ProfilePage({
                         'var(--text-muted)',
                     }}
                   >
-                    You haven't posted
+                    You have not posted
                     any comments yet.
                   </div>
                 )}
