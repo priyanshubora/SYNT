@@ -206,7 +206,7 @@ export default async function CategoryPage({
       count: 'exact',
       head: true,
     })
-    .eq('category_slug', slug)
+    .eq('category_slug', normalizedSlug)
 
   if (currentSort === 'top') {
     countQuery = countQuery.gte(
@@ -257,7 +257,7 @@ export default async function CategoryPage({
   let threadQuery = supabase
     .from('thread_stats')
     .select('*')
-    .eq('category_slug', slug)
+    .eq('category_slug', normalizedSlug)
 
   /*
    * TOP

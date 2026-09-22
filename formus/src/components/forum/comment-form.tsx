@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { postComment } from '@/app/actions/comment'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 type CommentFormProps = {
   threadId: string
@@ -32,54 +32,14 @@ export default function CommentForm({
     setSaving(true)
     setError('')
 
-    const supabase = createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      router.push(
-        `/login?next=${encodeURIComponent(
-          `/thread/${threadId}`
-        )}`
-      )
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (!profile) {
-      router.push(
-        `/setup-profile?next=${encodeURIComponent(
-          `/thread/${threadId}`
-        )}`
-      )
-      return
-    }
-
-    const { error } = await supabase
-      .from('comments')
-      .insert({
-        thread_id: threadId,
-        author_id: user.id,
-        content: cleanContent,
-      })
-
-    if (error) {
-      setError(error.message)
+    try {
+      await postComment(threadId, cleanContent)
+      setContent('')
       setSaving(false)
-      return
+    } catch (err: any) {
+      setError(err.message || 'Failed to post comment')
+      setSaving(false)
     }
-
-    setContent('')
-    setSaving(false)
-
-    router.refresh()
   }
 
   return (

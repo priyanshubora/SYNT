@@ -27,32 +27,9 @@ select
 
   tm.name as team_name,
 
-  coalesce(
-    (
-      select sum(tv.value)
-      from public.thread_votes tv
-      where tv.thread_id = t.id
-    ),
-    0
-  )::bigint as score,
-
-  coalesce(
-    (
-      select count(*)
-      from public.thread_votes tv
-      where tv.thread_id = t.id
-    ),
-    0
-  )::bigint as vote_count,
-
-  coalesce(
-    (
-      select count(*)
-      from public.comments cm
-      where cm.thread_id = t.id
-    ),
-    0
-  )::bigint as comment_count
+  t.score,
+  t.vote_count,
+  t.comment_count
 
 from public.threads t
 
