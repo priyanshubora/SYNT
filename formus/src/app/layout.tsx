@@ -1,6 +1,11 @@
+
 import type { Metadata } from "next";
+
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+
 import BootSplash from "@/components/forum/boot-splash";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <BootSplash />
         {children}
+        <Analytics />
       </body>
     </html>
   );
