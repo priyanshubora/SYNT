@@ -11,23 +11,40 @@ type RealtimeRefreshProps = {
     filter?: string
   }>
   channelName?: string
+  ignoreVoteUpdatesForUserId?: string | null
 }
 
+const DEFAULT_TABLE_FILTERS = [
+  { table: 'threads' },
+  { table: 'comments' },
+  { table: 'thread_votes' },
+]
+
 export default function RealtimeRefresh({
-  tableFilters = [
-    { table: 'threads' },
-    { table: 'comments' },
-    { table: 'thread_votes' },
-  ],
+  tableFilters = DEFAULT_TABLE_FILTERS,
   channelName = 'forum-live-updates',
+  ignoreVoteUpdatesForUserId = null,
 }: RealtimeRefreshProps) {
   const router = useRouter()
+  const tableFiltersKey = JSON.stringify(tableFilters)
 
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase.channel(channelName)
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null
 
-    for (const { table, filter } of tableFilters) {
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null
+        router.refresh()
+      }, 250)
+    }
+
+    const filters = JSON.parse(tableFiltersKey) as typeof tableFilters
+
+    for (const { table, filter } of filters) {
       channel.on(
         'postgres_changes',
         {
@@ -36,8 +53,23 @@ export default function RealtimeRefresh({
           table,
           filter,
         },
-        () => {
-          router.refresh()
+        (payload) => {
+          if (
+            ignoreVoteUpdatesForUserId &&
+            (table === 'thread_votes' || table === 'comment_votes')
+          ) {
+            const newRow = payload.new as { user_id?: string } | null
+            const oldRow = payload.old as { user_id?: string } | null
+
+            if (
+              newRow?.user_id === ignoreVoteUpdatesForUserId ||
+              oldRow?.user_id === ignoreVoteUpdatesForUserId
+            ) {
+              return
+            }
+          }
+
+          scheduleRefresh()
         },
       )
     }
@@ -45,9 +77,10 @@ export default function RealtimeRefresh({
     channel.subscribe()
 
     return () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
       supabase.removeChannel(channel)
     }
-  }, [channelName, router, tableFilters])
+  }, [channelName, ignoreVoteUpdatesForUserId, router, tableFiltersKey])
 
   return null
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -8,12 +8,14 @@ type Props = {
   commentId: string
   initialScore: number
   initialUserVote: number | null
+  currentUserId: string | null
 }
 
 export default function CommentVoteButtons({
   commentId,
   initialScore,
   initialUserVote,
+  currentUserId,
 }: Props) {
   const router = useRouter()
 
@@ -21,61 +23,66 @@ export default function CommentVoteButtons({
   const [userVote, setUserVote] = useState(initialUserVote)
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    setScore(initialScore)
+    setUserVote(initialUserVote)
+  }, [initialScore, initialUserVote])
+
   async function vote(value: 1 | -1) {
     if (loading) return
 
-    setLoading(true)
-
-    const supabase = createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+    if (!currentUserId) {
       router.push(
         `/login?next=${encodeURIComponent(window.location.pathname)}`,
       )
-
       return
     }
+
+    setLoading(true)
+    const previousScore = score
+    const previousVote = userVote
+    const removingVote = previousVote === value
+
+    setScore(
+      removingVote
+        ? previousScore - value
+        : previousScore + value - (previousVote ?? 0),
+    )
+    setUserVote(removingVote ? null : value)
+
+    const supabase = createClient()
 
     /*
      * REMOVE CURRENT VOTE
      */
-    if (userVote === value) {
+    if (removingVote) {
       const { error } = await supabase
         .from('comment_votes')
         .delete()
         .eq('comment_id', commentId)
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
 
       if (error) {
         console.error('Comment vote removal failed:', error)
+        setScore(previousScore)
+        setUserVote(previousVote)
         setLoading(false)
         return
       }
 
-      setScore((current) => current - value)
-      setUserVote(null)
-
       setLoading(false)
-      router.refresh()
-
       return
     }
 
     /*
      * ADD / CHANGE VOTE
      */
-    const previousVote = userVote
-
     const { error } = await supabase
       .from('comment_votes')
       .upsert(
         {
           comment_id: commentId,
-          user_id: user.id,
+          user_id: currentUserId,
           value,
         },
         {
@@ -85,23 +92,13 @@ export default function CommentVoteButtons({
 
     if (error) {
       console.error('Comment vote failed:', error)
+      setScore(previousScore)
+      setUserVote(previousVote)
       setLoading(false)
       return
     }
 
-    if (previousVote === null) {
-      setScore((current) => current + value)
-    } else {
-      setScore(
-        (current) => current + value - previousVote
-      )
-    }
-
-    setUserVote(value)
-
     setLoading(false)
-
-    router.refresh()
   }
 
   return (

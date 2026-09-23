@@ -8,43 +8,26 @@ type ForumShellWithCountsProps = {
 
 async function getCategoryCounts() {
   const supabase = await createClient()
-  
-  const communities = [
-    { slug: 'esports' },
-    { slug: 'bgmi' },
-    { slug: 'valorant' },
-    { slug: 'chess' },
-    { slug: 'free-fire' },
-    { slug: 'offtopic' },
-  ]
-
   const counts: Record<string, number> = {}
+  const { data, error } = await supabase
+    .from('categories')
+    .select('slug, threads(count)')
+    .is('threads.deleted_at', null)
 
-  await Promise.all(
-    communities.map(async (community) => {
-      // Normalize slug (offtopic vs off-topic)
-      const normalizedSlug =
-        community.slug === 'offtopic' ? 'off-topic' : community.slug
+  if (error) {
+    console.error('Category counts loading failed:', error)
+    return counts
+  }
 
-      const { data: category } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', normalizedSlug)
-        .maybeSingle()
+  const categories = (data ?? []) as Array<{
+    slug: string
+    threads: Array<{ count: number }>
+  }>
 
-      if (category) {
-        const { count } = await supabase
-          .from('threads')
-          .select('*', { count: 'exact', head: true })
-          .eq('category_id', category.id)
-          .is('deleted_at', null)
-
-        counts[community.slug] = count ?? 0
-      } else {
-        counts[community.slug] = 0
-      }
-    })
-  )
+  for (const category of categories) {
+    const slug = category.slug === 'off-topic' ? 'offtopic' : category.slug
+    counts[slug] = category.threads?.[0]?.count ?? 0
+  }
 
   return counts
 }

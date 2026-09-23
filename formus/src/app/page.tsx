@@ -79,10 +79,58 @@ export default async function HomePage({
     )
   }
 
+  function createThreadQuery() {
+    let query = supabase
+      .from('thread_stats')
+      .select(`
+        id,
+        title,
+        content,
+        created_at,
+        category_name,
+        category_slug,
+        author_username,
+        team_name,
+        team_logo_url,
+        score,
+        vote_count,
+        comment_count
+      `)
+
+    if (currentSort === 'top') {
+      query = query
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('score', { ascending: false })
+        .order('created_at', { ascending: false })
+    } else if (currentSort === 'replies') {
+      query = query
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('comment_count', { ascending: false })
+        .order('created_at', { ascending: false })
+    } else {
+      query = query
+        .order('created_at', { ascending: false })
+        .order('score', { ascending: false })
+    }
+
+    return query
+  }
+
+  const initialFrom = (currentPage - 1) * THREADS_PER_PAGE
+  const initialThreadsPromise = createThreadQuery().range(
+    initialFrom,
+    initialFrom + THREADS_PER_PAGE - 1,
+  )
+
+  const [countResult, initialThreadsResult] = await Promise.all([
+    countQuery,
+    initialThreadsPromise,
+  ])
+
   const {
     count: totalThreads,
     error: countError,
-  } = await countQuery
+  } = countResult
 
   if (countError) {
     console.error(
@@ -114,92 +162,13 @@ export default async function HomePage({
     THREADS_PER_PAGE -
     1
 
-  /*
-   * THREAD QUERY
-   */
+  let { data: threads, error } = initialThreadsResult
 
-  let threadQuery = supabase
-    .from('thread_stats')
-    .select(`
-      id,
-      title,
-      content,
-      created_at,
-      category_name,
-      category_slug,
-      author_username,
-      team_name,
-      team_logo_url,
-      score,
-      vote_count,
-      comment_count
-    `)
-
-  /*
-   * TOP
-   *
-   * Highest scoring threads
-   * from the last 7 days.
-   */
-
-  if (currentSort === 'top') {
-    threadQuery = threadQuery
-      .gte(
-        'created_at',
-        sevenDaysAgo.toISOString()
-      )
-      .order('score', {
-        ascending: false,
-      })
-      .order('created_at', {
-        ascending: false,
-      })
+  if (safePage !== currentPage) {
+    const result = await createThreadQuery().range(from, to)
+    threads = result.data
+    error = result.error
   }
-
-  /*
-   * MOST REPLIES
-   *
-   * Most commented threads
-   * from the last 7 days.
-   */
-
-  else if (currentSort === 'replies') {
-    threadQuery = threadQuery
-      .gte(
-        'created_at',
-        sevenDaysAgo.toISOString()
-      )
-      .order('comment_count', {
-        ascending: false,
-      })
-      .order('created_at', {
-        ascending: false,
-      })
-  }
-
-  /*
-   * LATEST
-   *
-   * Newest threads first.
-   */
-
-  else {
-    threadQuery = threadQuery
-      .order('created_at', {
-        ascending: false,
-      })
-      .order('score', {
-        ascending: false,
-      })
-  }
-
-  const {
-    data: threads,
-    error,
-  } = await threadQuery.range(
-    from,
-    to
-  )
 
   /*
    * PAGINATION
@@ -264,7 +233,20 @@ export default async function HomePage({
 
   return (
     <>
-      <RealtimeRefresh />
+      <RealtimeRefresh
+        tableFilters={[
+          { table: 'threads' },
+          ...((threads ?? []).length > 0
+            ? [{
+                table: 'comments',
+                filter: `thread_id=in.(${(threads ?? []).map((thread) => thread.id).join(',')})`,
+              }, {
+                table: 'thread_votes',
+                filter: `thread_id=in.(${(threads ?? []).map((thread) => thread.id).join(',')})`,
+              }]
+            : []),
+        ]}
+      />
 
       <ForumShellWithCounts>
         <div className="mx-auto max-w-4xl">

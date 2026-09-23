@@ -35,42 +35,14 @@ type RawComment = {
   content: string
   created_at: string
   updated_at: string
+  comment_number: number
 }
 
-function getRootCommentId(
-  commentId: string,
-  commentsById: Map<string, RawComment>,
-  cache = new Map<string, string>(),
-) {
-  const cachedRoot = cache.get(commentId)
-
-  if (cachedRoot) {
-    return cachedRoot
-  }
-
-  const visited = new Set<string>()
-
-  let currentId = commentId
-  let rootId = commentId
-
-  while (true) {
-    if (visited.has(currentId)) {
-      cache.set(commentId, rootId)
-      return rootId
-    }
-
-    visited.add(currentId)
-
-    const current = commentsById.get(currentId)
-
-    if (!current || !current.parent_id) {
-      rootId = current?.id ?? commentId
-      cache.set(commentId, rootId)
-      return rootId
-    }
-
-    currentId = current.parent_id
-  }
+type CommentPageData = {
+  comments: RawComment[]
+  totalCommentCount: number
+  currentPage: number
+  totalPages: number
 }
 
 export default async function ThreadPage({
@@ -86,22 +58,37 @@ export default async function ThreadPage({
 
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  /*
-   * THREAD
-   */
-
-  const {
-    data: thread,
-    error: threadError,
-  } = await supabase
+  const threadPromise = supabase
     .from('thread_stats')
     .select('*')
     .eq('id', id)
     .single()
+
+  const requestedCommentPage = Number(commentsPage)
+  const targetCommentId =
+    commentId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(commentId)
+      ? commentId
+      : null
+
+  const commentPagePromise = supabase.rpc('get_thread_comment_page', {
+    p_thread_id: id,
+    p_page_size: COMMENTS_PER_PAGE,
+    p_page:
+      Number.isInteger(requestedCommentPage) && requestedCommentPage > 0
+        ? requestedCommentPage
+        : 1,
+    p_comment_id: targetCommentId,
+  })
+
+  const [userResult, threadResult, commentPageResult] = await Promise.all([
+    supabase.auth.getUser(),
+    threadPromise,
+    commentPagePromise,
+  ])
+
+  const user = userResult.data.user
+  const { data: thread, error: threadError } = threadResult
 
   if (threadError || !thread) {
     notFound()
@@ -111,208 +98,16 @@ export default async function ThreadPage({
     redirect('/')
   }
 
-  /*
-   * THREAD VOTE
-   */
-
-  let userVote: number | null = null
-
-  if (user) {
-    const { data: vote } = await supabase
-      .from('thread_votes')
-      .select('value')
-      .eq('thread_id', id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    userVote = vote?.value ?? null
+  const commentPage = commentPageResult.data as CommentPageData | null
+  if (commentPageResult.error) {
+    console.error('Comments loading error:', commentPageResult.error)
   }
 
-  /*
-   * LOAD ALL COMMENTS
-   *
-   * We load the comment tree first and
-   * paginate only top-level comments.
-   *
-   * This prevents a reply from being
-   * separated from its parent by pagination.
-   */
-
-  const {
-    data: allComments,
-    error: commentsError,
-  } = await supabase
-    .from('comments')
-    .select(
-      `
-        id,
-        thread_id,
-        author_id,
-        parent_id,
-        content,
-        created_at,
-        updated_at
-      `,
-    )
-    .eq('thread_id', id)
-    .is('deleted_at', null)
-    .order('created_at', {
-      ascending: true,
-    })
-
-  if (commentsError) {
-    console.error(
-      'Comments loading error:',
-      commentsError,
-    )
-  }
-
-  const rawComments: RawComment[] =
-    allComments ?? []
-
-  const commentNumberById =
-    new Map<string, number>()
-
-  rawComments.forEach(
-    (comment, index) => {
-      commentNumberById.set(
-        comment.id,
-        index + 1,
-      )
-    },
-  )
-
-  const totalCommentCount =
-    rawComments.length
-
-  /*
-   * COMMENT TREE LOOKUP
-   */
-
-  const commentsById =
-    new Map<string, RawComment>()
-
-  for (const comment of rawComments) {
-    commentsById.set(
-      comment.id,
-      comment,
-    )
-  }
-
-  /*
-   * TOP LEVEL COMMENTS
-   */
-
-  const rootComments =
-    rawComments.filter(
-      (comment) =>
-        !comment.parent_id ||
-        !commentsById.has(
-          comment.parent_id,
-        ),
-    )
-
-  const requestedCommentsPage =
-    Number(commentsPage ?? '1')
-
-  let currentCommentsPage =
-    Number.isInteger(
-      requestedCommentsPage,
-    ) &&
-    requestedCommentsPage > 0
-      ? requestedCommentsPage
-      : 1
-
-  /*
-   * If a shared comment ID was provided,
-   * automatically calculate the page
-   * containing its root comment.
-   */
-
-  const rootIdCache = new Map<string, string>()
-
-  if (commentId) {
-    const targetComment =
-      commentsById.get(commentId)
-
-    if (targetComment) {
-      const rootId =
-        getRootCommentId(
-          targetComment.id,
-          commentsById,
-          rootIdCache,
-        )
-
-      const rootIndex =
-        rootComments.findIndex(
-          (comment) =>
-            comment.id === rootId,
-        )
-
-      if (rootIndex >= 0) {
-        currentCommentsPage =
-          Math.floor(
-            rootIndex /
-              COMMENTS_PER_PAGE,
-          ) + 1
-      }
-    }
-  }
-
-  const totalCommentPages =
-    Math.max(
-      1,
-      Math.ceil(
-        rootComments.length /
-          COMMENTS_PER_PAGE,
-      ),
-    )
-
-  const safeCommentsPage =
-    Math.min(
-      currentCommentsPage,
-      totalCommentPages,
-    )
-
-  const commentFrom =
-    (safeCommentsPage - 1) *
-    COMMENTS_PER_PAGE
-
-  const commentTo =
-    commentFrom +
-    COMMENTS_PER_PAGE
-
-  const visibleRootComments =
-    rootComments.slice(
-      commentFrom,
-      commentTo,
-    )
-
-  const visibleRootIds =
-    new Set(
-      visibleRootComments.map(
-        (comment) => comment.id,
-      ),
-    )
-
-  /*
-   * INCLUDE EVERY DESCENDANT OF THE
-   * VISIBLE ROOT COMMENTS.
-   */
-
-  const visibleComments =
-    rawComments.filter((comment) => {
-      const rootId =
-        getRootCommentId(
-          comment.id,
-          commentsById,
-          rootIdCache,
-        )
-
-      return visibleRootIds.has(
-        rootId,
-      )
-    })
+  const rawComments = commentPage?.comments ?? []
+  const visibleComments = rawComments
+  const totalCommentCount = commentPage?.totalCommentCount ?? 0
+  const safeCommentsPage = commentPage?.currentPage ?? 1
+  const totalCommentPages = commentPage?.totalPages ?? 1
 
   /*
    * COMMENT AUTHORS
@@ -351,14 +146,44 @@ export default async function ThreadPage({
           .in('comment_id', commentIds)
       : Promise.resolve({ data: [] })
 
-  const [profilesResult, votesResult] =
+  const threadVotePromise = user
+    ? supabase
+        .from('thread_votes')
+        .select('value')
+        .eq('thread_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    : Promise.resolve({ data: null })
+
+  const currentProfilePromise = user
+    ? supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+    : Promise.resolve({ data: null })
+
+  const [
+    profilesResult,
+    votesResult,
+    threadVoteResult,
+    currentProfileResult,
+  ] =
     await Promise.all([
       profilesPromise,
       votesPromise,
+      threadVotePromise,
+      currentProfilePromise,
     ])
+
+  const userVote = threadVoteResult.data?.value ?? null
 
   const commentProfiles =
     profilesResult.data ?? []
+
+  const profilesById = new Map(
+    commentProfiles.map((profile) => [profile.id, profile]),
+  )
 
   const teamIds = [
     ...new Set(
@@ -391,12 +216,26 @@ export default async function ThreadPage({
    */
 
   const teams = teamsResult.data ?? []
+  const teamsById = new Map(teams.map((team) => [team.id, team]))
 
   /*
    * COMMENT VOTES
    */
 
   const commentVotes = votesResult.data ?? []
+  const voteScoreByCommentId = new Map<string, number>()
+  const userVoteByCommentId = new Map<string, number>()
+
+  for (const vote of commentVotes) {
+    voteScoreByCommentId.set(
+      vote.comment_id,
+      (voteScoreByCommentId.get(vote.comment_id) ?? 0) + vote.value,
+    )
+
+    if (user && vote.user_id === user.id) {
+      userVoteByCommentId.set(vote.comment_id, vote.value)
+    }
+  }
 
   /*
    * BUILD CLIENT COMMENT DATA
@@ -405,44 +244,15 @@ export default async function ThreadPage({
   const commentData =
     visibleComments.map(
       (comment) => {
-        const profile =
-          commentProfiles.find(
-            (item) =>
-              item.id ===
-              comment.author_id,
-          )
+        const profile = profilesById.get(comment.author_id)
 
         const team =
           profile?.team_id
-            ? teams.find(
-                (item) =>
-                  item.id ===
-                  profile.team_id,
-              )
+            ? teamsById.get(profile.team_id)
             : null
 
-        const votesForComment =
-          commentVotes.filter(
-            (vote) =>
-              vote.comment_id ===
-              comment.id,
-          )
-
-        const score =
-          votesForComment.reduce(
-            (total, vote) =>
-              total + vote.value,
-            0,
-          )
-
-        const currentUserVote =
-          user
-            ? votesForComment.find(
-                (vote) =>
-                  vote.user_id ===
-                  user.id,
-              )?.value ?? null
-            : null
+        const score = voteScoreByCommentId.get(comment.id) ?? 0
+        const currentUserVote = userVoteByCommentId.get(comment.id) ?? null
 
         const authorRole: 'user' | 'moderator' | 'admin' =
           profile?.role === 'admin'
@@ -465,10 +275,7 @@ export default async function ThreadPage({
             comment.created_at,
           updated_at:
             comment.updated_at,
-          comment_number:
-            commentNumberById.get(
-              comment.id,
-            ) ?? 1,
+          comment_number: comment.comment_number,
           author_username:
             profile?.username ??
             'User',
@@ -514,31 +321,24 @@ export default async function ThreadPage({
     | 'moderator'
     | 'admin' = 'user'
 
-  if (user) {
-    const { data: currentProfile } =
-      await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle()
-
-    if (currentProfile?.role === 'admin') {
-      currentUserRole = 'admin'
-    } else if (
-      currentProfile?.role === 'moderator'
-    ) {
-      currentUserRole = 'moderator'
-    }
+  if (currentProfileResult.data?.role === 'admin') {
+    currentUserRole = 'admin'
+  } else if (currentProfileResult.data?.role === 'moderator') {
+    currentUserRole = 'moderator'
   }
 
   return (
     <>
       <RealtimeRefresh
         channelName={`thread-live-updates:${id}`}
+        ignoreVoteUpdatesForUserId={user?.id ?? null}
         tableFilters={[
           { table: 'threads', filter: `id=eq.${id}` },
           { table: 'comments', filter: `thread_id=eq.${id}` },
           { table: 'thread_votes', filter: `thread_id=eq.${id}` },
+          ...(commentIds.length > 0
+            ? [{ table: 'comment_votes', filter: `comment_id=in.(${commentIds.join(',')})` }]
+            : []),
         ]}
       />
 
@@ -771,6 +571,7 @@ export default async function ThreadPage({
                 initialUserVote={
                   userVote
                 }
+                currentUserId={user?.id ?? null}
               />
             </div>
           </div>

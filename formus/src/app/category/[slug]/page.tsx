@@ -127,58 +127,9 @@ export default async function CategoryPage({
       ? requestedPage
       : 1
 
-  const [
-    categoryCountResult,
-    categoryAuthorsResult,
-  ] = await Promise.all([
-    supabase
-      .from('threads')
-      .select('*', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('category_id', category.id),
-    supabase
-      .from('threads')
-      .select('author_id')
-      .eq('category_id', category.id),
-  ])
-
-  const {
-    count: totalThreads,
-    error: countError,
-  } = categoryCountResult
-
-  if (countError) {
-    console.error(
-      'Category thread count error:',
-      countError
-    )
-  }
-
-  const {
-    data: threadAuthors,
-    error: authorError,
-  } = categoryAuthorsResult
-
-  if (authorError) {
-    console.error(
-      'Category member count error:',
-      authorError
-    )
-  }
-
-  const uniqueMembers = new Set(
-    (threadAuthors ?? []).map(
-      (row) => row.author_id
-    )
-  ).size
-
-  const liveDiscussions = formatCompactCount(
-    totalThreads ?? 0
-  )
-  const liveMembers = formatCompactCount(
-    uniqueMembers
+  const categoryStatsPromise = supabase.rpc(
+    'get_category_stats',
+    { p_category_id: category.id },
   )
 
   /*
@@ -222,10 +173,53 @@ export default async function CategoryPage({
     )
   }
 
+  function createThreadQuery() {
+    let query = supabase
+      .from('thread_stats')
+      .select('*')
+      .eq('category_slug', normalizedSlug)
+
+    if (currentSort === 'top') {
+      query = query
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('score', { ascending: false })
+        .order('created_at', { ascending: false })
+    } else if (currentSort === 'replies') {
+      query = query
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('comment_count', { ascending: false })
+        .order('created_at', { ascending: false })
+    } else {
+      query = query
+        .order('created_at', { ascending: false })
+        .order('score', { ascending: false })
+    }
+
+    return query
+  }
+
+  const initialFrom = (currentPage - 1) * THREADS_PER_PAGE
+  const [categoryStatsResult, listCountResult, initialThreadsResult] = await Promise.all([
+    categoryStatsPromise,
+    countQuery,
+    createThreadQuery().range(
+      initialFrom,
+      initialFrom + THREADS_PER_PAGE - 1,
+    ),
+  ])
+
+  if (categoryStatsResult.error) {
+    console.error('Category stats loading failed:', categoryStatsResult.error)
+  }
+
+  const categoryStats = categoryStatsResult.data?.[0]
+  const totalThreads = categoryStats?.discussion_count ?? 0
+  const uniqueMembers = categoryStats?.member_count ?? 0
+  const liveDiscussions = formatCompactCount(totalThreads)
+  const liveMembers = formatCompactCount(uniqueMembers)
+
   const totalCountForList =
-    (await countQuery).count ??
-    totalThreads ??
-    0
+    listCountResult.count ?? totalThreads
 
   const total = totalCountForList
 
@@ -250,80 +244,13 @@ export default async function CategoryPage({
     THREADS_PER_PAGE -
     1
 
-  /*
-   * Load the actual threads.
-   */
+  let { data: threads, error: threadsError } = initialThreadsResult
 
-  let threadQuery = supabase
-    .from('thread_stats')
-    .select('*')
-    .eq('category_slug', normalizedSlug)
-
-  /*
-   * TOP
-   *
-   * Highest score during the
-   * last 7 days.
-   */
-
-  if (currentSort === 'top') {
-    threadQuery = threadQuery
-      .gte(
-        'created_at',
-        sevenDaysAgo.toISOString()
-      )
-      .order('score', {
-        ascending: false,
-      })
-      .order('created_at', {
-        ascending: false,
-      })
+  if (safePage !== currentPage) {
+    const result = await createThreadQuery().range(from, to)
+    threads = result.data
+    threadsError = result.error
   }
-
-  /*
-   * MOST REPLIES
-   *
-   * Most comments during the
-   * last 7 days.
-   */
-
-  else if (currentSort === 'replies') {
-    threadQuery = threadQuery
-      .gte(
-        'created_at',
-        sevenDaysAgo.toISOString()
-      )
-      .order('comment_count', {
-        ascending: false,
-      })
-      .order('created_at', {
-        ascending: false,
-      })
-  }
-
-  /*
-   * LATEST
-   *
-   * Newest threads first.
-   */
-
-  else {
-    threadQuery = threadQuery
-      .order('created_at', {
-        ascending: false,
-      })
-      .order('score', {
-        ascending: false,
-      })
-  }
-
-  const {
-    data: threads,
-    error: threadsError,
-  } = await threadQuery.range(
-    from,
-    to
-  )
 
   if (threadsError) {
     console.error(
@@ -405,8 +332,15 @@ export default async function CategoryPage({
             table: 'threads',
             filter: `category_id=eq.${category.id}`,
           },
-          { table: 'comments' },
-          { table: 'thread_votes' },
+          ...(threadList.length > 0
+            ? [{
+                table: 'comments',
+                filter: `thread_id=in.(${threadList.map((thread) => thread.id).join(',')})`,
+              }, {
+                table: 'thread_votes',
+                filter: `thread_id=in.(${threadList.map((thread) => thread.id).join(',')})`,
+              }]
+            : []),
         ]}
       />
 

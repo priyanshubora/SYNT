@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
@@ -9,12 +9,14 @@ type VoteButtonsProps = {
   threadId: string
   initialScore: number
   initialUserVote: number | null
+  currentUserId: string | null
 }
 
 export default function VoteButtons({
   threadId,
   initialScore,
   initialUserVote,
+  currentUserId,
 }: VoteButtonsProps) {
   const router = useRouter()
 
@@ -22,59 +24,66 @@ export default function VoteButtons({
   const [userVote, setUserVote] = useState(initialUserVote)
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    setScore(initialScore)
+    setUserVote(initialUserVote)
+  }, [initialScore, initialUserVote])
+
   async function handleVote(value: 1 | -1) {
     if (loading) return
 
-    setLoading(true)
-
-    const supabase = createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+    if (!currentUserId) {
       router.push(
         `/login?next=${encodeURIComponent(window.location.pathname)}`,
       )
       return
     }
 
+    setLoading(true)
+    const previousScore = score
+    const previousVote = userVote
+    const removingVote = previousVote === value
+
+    setScore(
+      removingVote
+        ? previousScore - value
+        : previousScore + value - (previousVote ?? 0),
+    )
+    setUserVote(removingVote ? null : value)
+
+    const supabase = createClient()
+
     /*
      * REMOVE VOTE
      */
-    if (userVote === value) {
+    if (removingVote) {
       const { error } = await supabase
         .from('thread_votes')
         .delete()
         .eq('thread_id', threadId)
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
 
       if (error) {
         console.error('Vote removal failed:', error)
+        setScore(previousScore)
+        setUserVote(previousVote)
         setLoading(false)
         return
       }
 
-      setScore((current) => current - value)
-      setUserVote(null)
       setLoading(false)
-
-      router.refresh()
       return
     }
 
     /*
      * ADD / CHANGE VOTE
      */
-    const previousVote = userVote
-
     const { error } = await supabase
       .from('thread_votes')
       .upsert(
         {
           thread_id: threadId,
-          user_id: user.id,
+          user_id: currentUserId,
           value,
         },
         {
@@ -84,22 +93,13 @@ export default function VoteButtons({
 
     if (error) {
       console.error('Vote failed:', error)
+      setScore(previousScore)
+      setUserVote(previousVote)
       setLoading(false)
       return
     }
 
-    if (previousVote === null) {
-      setScore((current) => current + value)
-    } else {
-      setScore(
-        (current) => current + value - previousVote,
-      )
-    }
-
-    setUserVote(value)
     setLoading(false)
-
-    router.refresh()
   }
 
   return (

@@ -924,6 +924,7 @@ export default function CommentSection({
                       initialUserVote={
                         comment.userVote
                       }
+                      currentUserId={currentUserId}
                     />
 
                     <button
@@ -1376,6 +1377,7 @@ export default function CommentSection({
                               commentId={reply.id}
                               initialScore={reply.score}
                               initialUserVote={reply.userVote}
+                              currentUserId={currentUserId}
                             />
 
                             <button
