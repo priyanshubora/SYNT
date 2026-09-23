@@ -549,7 +549,7 @@ export default function CommentSection({
   }
 
   /*
-   * BUILD CHILD MAP
+   * BUILD CHILD MAP AND EXPANDED STATE
    */
 
   const childrenByParent =
@@ -575,8 +575,61 @@ export default function CommentSection({
     )
   }
 
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
+
+  function toggleReplies(commentId: string) {
+    setExpandedReplies((prev) => {
+      const next = new Set(prev)
+      if (next.has(commentId)) {
+        next.delete(commentId)
+      } else {
+        next.add(commentId)
+      }
+      return next
+    })
+  }
+
   /*
-   * RENDER COMMENT TREE
+   * GET ALL NESTED REPLIES (Instagram Style - Flatten All Levels)
+   */
+
+  function getAllReplies(commentId: string): Comment[] {
+    const result: Comment[] = []
+    const directReplies = childrenByParent.get(commentId) ?? []
+    
+    for (const reply of directReplies) {
+      result.push(reply)
+      // Recursively get nested replies
+      const nestedReplies = getAllReplies(reply.id)
+      result.push(...nestedReplies)
+    }
+    
+    return result
+  }
+
+  /*
+   * GET PARENT COMMENT USERNAME
+   */
+
+  function getParentUsername(parentId: string | null): string | null {
+    if (!parentId) return null
+    const parent = comments.find(c => c.id === parentId)
+    return parent?.author_username ?? null
+  }
+
+  /*
+   * GET ROOT COMMENT ID (for nested replies)
+   */
+
+  function getRootCommentId(commentId: string): string {
+    const comment = comments.find(c => c.id === commentId)
+    if (!comment || !comment.parent_id) return commentId
+    // Recursively find root
+    return getRootCommentId(comment.parent_id)
+  }
+
+  /*
+   * RENDER COMMENT TREE (Instagram Style)
    */
 
   function renderComments(
@@ -599,23 +652,15 @@ export default function CommentSection({
           highlightedId ===
           comment.id
 
+        // Get ALL replies (including nested) to this comment
+        const allReplies = !isReply ? getAllReplies(comment.id) : []
+        const replyCount = allReplies.length
+        const isExpanded = expandedReplies.has(comment.id)
+
         return (
           <div
             key={comment.id}
             id={`comment-${comment.id}`}
-            className={
-              isReply
-                ? 'border-l pl-4 sm:pl-6'
-                : ''
-            }
-            style={
-              isReply
-                ? {
-                    borderColor:
-                      'var(--border)',
-                  }
-                : undefined
-            }
           >
             <article
               className={`border-b px-4 py-5 last:border-b-0 sm:px-5 ${
@@ -633,21 +678,23 @@ export default function CommentSection({
               }}
             >
               <div className="flex gap-3">
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold"
-                  style={{
-                    background:
-                      'transparent',
-                    borderColor:
-                      '#74A662',
-                    color:
-                      '#74A662',
-                  }}
-                >
-                  #{comment.comment_number}
-                </div>
+                {!isReply && (
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold"
+                    style={{
+                      background:
+                        'transparent',
+                      borderColor:
+                        '#74A662',
+                      color:
+                        '#74A662',
+                    }}
+                  >
+                    #{comment.comment_number}
+                  </div>
+                )}
 
-                <div className="min-w-0 flex-1">
+                <div className={`min-w-0 flex-1 ${isReply ? 'ml-9 sm:ml-12' : ''}`}>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span
                       className="text-sm font-bold"
@@ -917,6 +964,48 @@ export default function CommentSection({
 
                   </div>
 
+                  {/* VIEW ALL REPLIES BUTTON (Instagram Style) */}
+
+                  {!isReply && replyCount > 0 && !isExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => toggleReplies(comment.id)}
+                      className="mt-3 flex items-center gap-2 text-xs font-semibold hover:opacity-70"
+                      style={{
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <div
+                        className="h-[1px] w-6"
+                        style={{
+                          background: 'var(--border)',
+                        }}
+                      />
+                      View all {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+                    </button>
+                  )}
+
+                  {/* HIDE REPLIES BUTTON */}
+
+                  {!isReply && replyCount > 0 && isExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => toggleReplies(comment.id)}
+                      className="mt-3 flex items-center gap-2 text-xs font-semibold hover:opacity-70"
+                      style={{
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <div
+                        className="h-[1px] w-6"
+                        style={{
+                          background: 'var(--border)',
+                        }}
+                      />
+                      Hide replies
+                    </button>
+                  )}
+
                   {/* REPLY BOX */}
 
                   {replyToId ===
@@ -1075,16 +1164,348 @@ export default function CommentSection({
                     </div>
                   )}
 
-                  {/* NESTED REPLIES */}
-
-                  {renderComments(
-                    comment.id,
-                    depth + 1,
-                  )}
-
                 </div>
               </div>
             </article>
+
+            {/* EXPANDED REPLIES (Instagram Style - Flat Indentation) */}
+
+            {!isReply && isExpanded && allReplies.length > 0 && (
+              <div>
+                {allReplies.map((reply) => {
+                  const replyIsHighlighted = highlightedId === reply.id
+                  const replyToUsername = getParentUsername(reply.parent_id)
+
+                  return (
+                    <article
+                      key={reply.id}
+                      id={`comment-${reply.id}`}
+                      className={`border-b px-4 py-5 last:border-b-0 sm:px-5 ${
+                        replyIsHighlighted
+                          ? 'ring-2 ring-[var(--accent)] ring-inset'
+                          : ''
+                      }`}
+                      style={{
+                        borderColor: 'var(--border)',
+                        background: replyIsHighlighted
+                          ? 'var(--accent-soft)'
+                          : 'transparent',
+                      }}
+                    >
+                      <div className="flex gap-3">
+                        <div className="min-w-0 flex-1 ml-9 sm:ml-12">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span
+                              className="text-sm font-bold"
+                              style={{
+                                color: 'var(--text-primary)',
+                              }}
+                            >
+                              {reply.author_username}
+                            </span>
+
+                            {reply.author_role !== 'user' ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span
+                                  className="border px-1.5 py-0.5 text-[8px] font-bold uppercase"
+                                  style={{
+                                    background: 'var(--accent-soft)',
+                                    borderColor: 'var(--border)',
+                                    color: 'var(--accent)',
+                                  }}
+                                >
+                                  {reply.author_role}
+                                </span>
+
+                                {reply.team_name && (
+                                  <span
+                                    className="inline-flex items-center gap-1.5 whitespace-nowrap border px-1.5 py-0.5 text-[9px] font-bold"
+                                    style={{
+                                      background: 'var(--accent-soft)',
+                                      borderColor: 'var(--border)',
+                                      color: 'var(--accent)',
+                                    }}
+                                  >
+                                    {reply.team_logo_url && (
+                                      <img
+                                        src={reply.team_logo_url}
+                                        alt=""
+                                        className="h-4 w-4 object-contain"
+                                      />
+                                    )}
+                                    <span>{reply.team_name}</span>
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              reply.team_name && (
+                                <span
+                                  className="inline-flex items-center gap-1.5 whitespace-nowrap border px-1.5 py-0.5 text-[9px] font-bold"
+                                  style={{
+                                    background: 'var(--accent-soft)',
+                                    borderColor: 'var(--border)',
+                                    color: 'var(--accent)',
+                                  }}
+                                >
+                                  {reply.team_logo_url && (
+                                    <img
+                                      src={reply.team_logo_url}
+                                      alt=""
+                                      className="h-4 w-4 object-contain"
+                                    />
+                                  )}
+                                  <span>{reply.team_name}</span>
+                                </span>
+                              )
+                            )}
+
+                            <span
+                              className="text-[10px]"
+                              style={{
+                                color: 'var(--text-muted)',
+                              }}
+                            >
+                              · {timeAgo(reply.created_at)}
+                            </span>
+
+                            {reply.updated_at !== reply.created_at && (
+                              <span
+                                className="text-[10px]"
+                                style={{
+                                  color: 'var(--text-muted)',
+                                }}
+                              >
+                                · edited
+                              </span>
+                            )}
+                          </div>
+
+                          {/* CONTENT */}
+
+                          <p
+                            className="comment-text mt-2 whitespace-pre-wrap text-sm leading-6"
+                            style={{
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            {replyToUsername && (
+                              <span
+                                className="font-semibold"
+                                style={{
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                @{replyToUsername}{' '}
+                              </span>
+                            )}
+                            {reply.content}
+                          </p>
+
+                          {/* EDIT / DELETE */}
+
+                          <CommentActions
+                            commentId={reply.id}
+                            authorId={reply.author_id}
+                            currentUserId={currentUserId}
+                            content={reply.content}
+                          />
+
+                          <div className="mt-2 flex flex-wrap items-center gap-4">
+                            {currentUserRole !== 'user' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const reason = window.prompt(
+                                      'Reason for deleting this comment:',
+                                    )
+
+                                    if (!reason?.trim()) {
+                                      return
+                                    }
+
+                                    const response = await fetch(
+                                      '/api/moderation/action',
+                                      {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                          action: 'delete_comment',
+                                          targetType: 'comment',
+                                          targetId: reply.id,
+                                          reason: reason.trim(),
+                                        }),
+                                      },
+                                    )
+
+                                    if (!response.ok) {
+                                      const data = await response
+                                        .json()
+                                        .catch(() => null)
+
+                                      window.alert(
+                                        data?.error ||
+                                          'Moderation action failed.',
+                                      )
+
+                                      return
+                                    }
+
+                                    router.refresh()
+                                  }}
+                                  className="text-[10px] font-semibold text-red-500 hover:underline"
+                                >
+                                  Mod: Delete
+                                </button>
+                              </>
+                            )}
+
+                            <ReportButton
+                              targetType="comment"
+                              targetId={reply.id}
+                              currentUserId={currentUserId}
+                            />
+                          </div>
+
+                          {/* ACTIONS */}
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3 sm:gap-4">
+                            <CommentVoteButtons
+                              commentId={reply.id}
+                              initialScore={reply.score}
+                              initialUserVote={reply.userVote}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => startReply(comment.id)}
+                              disabled={isLocked}
+                              className="text-xs font-semibold transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+                              style={{
+                                color: 'var(--text-muted)',
+                              }}
+                            >
+                              {isLocked ? 'Locked' : 'Reply'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => shareComment(reply)}
+                              className="text-xs font-semibold transition hover:opacity-70"
+                              style={{
+                                color: 'var(--text-muted)',
+                              }}
+                            >
+                              {shareStatus === reply.id ? 'Copied' : 'Share'}
+                            </button>
+                          </div>
+
+                          {/* REPLY BOX FOR NESTED REPLY */}
+
+                          {replyToId === reply.id && (
+                            <div
+                              className="mt-4 border p-3"
+                              style={{
+                                background: 'var(--surface-secondary)',
+                                borderColor: 'var(--border)',
+                              }}
+                            >
+                              <div
+                                className="mb-2 text-[10px] font-semibold"
+                                style={{
+                                  color: 'var(--text-muted)',
+                                }}
+                              >
+                                Replying to {reply.author_username}
+                              </div>
+
+                              <textarea
+                                ref={replyTextareaRef}
+                                value={replyText}
+                                onChange={(event) => {
+                                  setReplyText(event.target.value)
+                                  resizeTextarea(event.target)
+                                  if (replyError) {
+                                    setReplyError('')
+                                  }
+                                }}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === 'Enter' &&
+                                    (event.ctrlKey || event.metaKey)
+                                  ) {
+                                    event.preventDefault()
+                                    submitReply(comment.id)
+                                  }
+                                }}
+                                rows={1}
+                                autoFocus
+                                placeholder="Write a reply..."
+                                className="comment-input min-h-[42px] w-full resize-none overflow-hidden border px-3 py-2.5 text-sm outline-none"
+                                style={{
+                                  background: 'var(--surface)',
+                                  color: 'var(--text-primary)',
+                                  borderColor: 'var(--border)',
+                                }}
+                              />
+
+                              {replyError && (
+                                <p className="mt-2 text-xs text-red-500">
+                                  {replyError}
+                                </p>
+                              )}
+
+                              <div className="mt-3 flex items-center justify-between">
+                                <span
+                                  className="text-[10px]"
+                                  style={{
+                                    color: 'var(--text-muted)',
+                                  }}
+                                >
+                                  Ctrl + Enter to reply
+                                </span>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={cancelReply}
+                                    className="border px-3 py-1.5 text-[10px] font-semibold"
+                                    style={{
+                                      background: 'var(--surface)',
+                                      borderColor: 'var(--border)',
+                                      color: 'var(--text-secondary)',
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => submitReply(comment.id)}
+                                    disabled={replyPosting}
+                                    className="border px-3 py-1.5 text-[10px] font-bold"
+                                    style={{
+                                      background: 'var(--accent)',
+                                      borderColor: 'var(--accent)',
+                                      color: '#ffffff',
+                                      opacity: replyPosting ? 0.6 : 1,
+                                    }}
+                                  >
+                                    {replyPosting ? 'Posting...' : 'Reply'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )
       },
