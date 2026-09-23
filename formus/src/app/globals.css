@@ -76,8 +76,8 @@ a,
   justify-content: center;
   background: #000000;
   pointer-events: none;
-  animation: splashFadeOut 0.75s ease forwards;
-  animation-delay: 0.7s;
+  animation: splashFadeOut 0.35s ease forwards;
+  animation-delay: 0.15s;
 }
 
 .boot-splash__logo {
@@ -87,7 +87,7 @@ a,
   opacity: 0;
   transform: scale(0.35) rotate(-7deg);
   filter: drop-shadow(0 0 18px rgba(116, 166, 98, 0.4));
-  animation: logoReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: logoReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes logoReveal {

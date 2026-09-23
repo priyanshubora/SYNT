@@ -16,20 +16,16 @@ export default function BootSplash() {
       return
     }
 
-    document.body.style.overflow = 'hidden'
-
     const timer = window.setTimeout(() => {
       setVisible(false)
-      document.body.style.overflow = ''
       window.sessionStorage.setItem(
         'snyt-boot-splash-seen',
         '1',
       )
-    }, 1100)
+    }, 550)
 
     return () => {
       window.clearTimeout(timer)
-      document.body.style.overflow = ''
     }
   }, [])
 
