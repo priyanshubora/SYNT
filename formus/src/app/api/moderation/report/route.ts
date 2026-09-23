@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
+import { readJsonObject, UUID_PATTERN } from '@/lib/api/request'
+import { enforceMutationRateLimit } from '@/lib/api/rate-limit'
 
 type ReportStatus =
   | 'reviewed'
@@ -55,25 +57,20 @@ export async function POST(
     )
   }
 
-  let body: Record<
-    string,
-    unknown
-  >
+  const rateLimitResponse = await enforceMutationRateLimit(
+    supabase,
+    'moderation.report_status',
+  )
+  if (rateLimitResponse) return rateLimitResponse
 
-  try {
-    body =
-      await request.json()
-  } catch {
+  const parsedBody = await readJsonObject(request)
+  if (!parsedBody.ok) {
     return NextResponse.json(
-      {
-        error:
-          'Invalid request body.',
-      },
-      {
-        status: 400,
-      },
+      { error: parsedBody.message },
+      { status: parsedBody.status },
     )
   }
+  const body = parsedBody.value
 
   const reportId =
     typeof body.reportId ===
@@ -84,7 +81,7 @@ export async function POST(
   const status =
     body.status as ReportStatus
 
-  if (!reportId) {
+  if (!UUID_PATTERN.test(reportId)) {
     return NextResponse.json(
       {
         error:

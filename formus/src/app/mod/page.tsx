@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import ForumShell from '@/components/forum/forum-shell'
@@ -80,7 +80,7 @@ export default function ModPage() {
     null,
   )
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -239,11 +239,14 @@ export default function ModPage() {
     )
 
     setLoading(false)
-  }
+  }, [router])
 
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    const frame = window.requestAnimationFrame(() => {
+      void loadDashboard()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [loadDashboard])
 
   async function moderationAction(
     action: string,

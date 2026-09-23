@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
+import { readJsonObject, UUID_PATTERN } from '@/lib/api/request'
+import { enforceMutationRateLimit } from '@/lib/api/rate-limit'
 
 type Action =
   | 'delete_thread'
@@ -71,25 +73,20 @@ export async function POST(
     )
   }
 
-  let body: Record<
-    string,
-    unknown
-  >
+  const rateLimitResponse = await enforceMutationRateLimit(
+    supabase,
+    'moderation.action',
+  )
+  if (rateLimitResponse) return rateLimitResponse
 
-  try {
-    body =
-      await request.json()
-  } catch {
+  const parsedBody = await readJsonObject(request)
+  if (!parsedBody.ok) {
     return NextResponse.json(
-      {
-        error:
-          'Invalid request body.',
-      },
-      {
-        status: 400,
-      },
+      { error: parsedBody.message },
+      { status: parsedBody.status },
     )
   }
+  const body = parsedBody.value
 
   const action =
     body.action as Action
@@ -108,6 +105,13 @@ export async function POST(
     'string'
       ? body.reason.trim()
       : ''
+
+  if (reason.length > 1000) {
+    return NextResponse.json(
+      { error: 'Reason must be 1000 characters or fewer.' },
+      { status: 400 },
+    )
+  }
 
   if (
     !VALID_ACTIONS.includes(
@@ -140,7 +144,7 @@ export async function POST(
     )
   }
 
-  if (!targetId) {
+  if (!UUID_PATTERN.test(targetId)) {
     return NextResponse.json(
       {
         error:

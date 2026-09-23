@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -19,14 +19,21 @@ export default function CommentVoteButtons({
 }: Props) {
   const router = useRouter()
 
-  const [score, setScore] = useState(initialScore)
-  const [userVote, setUserVote] = useState(initialUserVote)
+  const [optimisticState, setOptimisticState] = useState<{
+    baseScore: number
+    baseUserVote: number | null
+    score: number
+    userVote: number | null
+  } | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    setScore(initialScore)
-    setUserVote(initialUserVote)
-  }, [initialScore, initialUserVote])
+  const optimisticStateIsCurrent =
+    optimisticState?.baseScore === initialScore &&
+    optimisticState.baseUserVote === initialUserVote
+  const score = optimisticStateIsCurrent ? optimisticState.score : initialScore
+  const userVote = optimisticStateIsCurrent
+    ? optimisticState.userVote
+    : initialUserVote
 
   async function vote(value: 1 | -1) {
     if (loading) return
@@ -43,12 +50,14 @@ export default function CommentVoteButtons({
     const previousVote = userVote
     const removingVote = previousVote === value
 
-    setScore(
-      removingVote
+    setOptimisticState({
+      baseScore: initialScore,
+      baseUserVote: initialUserVote,
+      score: removingVote
         ? previousScore - value
         : previousScore + value - (previousVote ?? 0),
-    )
-    setUserVote(removingVote ? null : value)
+      userVote: removingVote ? null : value,
+    })
 
     const supabase = createClient()
 
@@ -64,8 +73,12 @@ export default function CommentVoteButtons({
 
       if (error) {
         console.error('Comment vote removal failed:', error)
-        setScore(previousScore)
-        setUserVote(previousVote)
+        setOptimisticState({
+          baseScore: initialScore,
+          baseUserVote: initialUserVote,
+          score: previousScore,
+          userVote: previousVote,
+        })
         setLoading(false)
         return
       }
@@ -92,8 +105,12 @@ export default function CommentVoteButtons({
 
     if (error) {
       console.error('Comment vote failed:', error)
-      setScore(previousScore)
-      setUserVote(previousVote)
+      setOptimisticState({
+        baseScore: initialScore,
+        baseUserVote: initialUserVote,
+        score: previousScore,
+        userVote: previousVote,
+      })
       setLoading(false)
       return
     }

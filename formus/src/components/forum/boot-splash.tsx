@@ -12,8 +12,10 @@ export default function BootSplash() {
       )
 
     if (hasSeenSplash === '1') {
-      setVisible(false)
-      return
+      const frame = window.requestAnimationFrame(() => {
+        setVisible(false)
+      })
+      return () => window.cancelAnimationFrame(frame)
     }
 
     const timer = window.setTimeout(() => {

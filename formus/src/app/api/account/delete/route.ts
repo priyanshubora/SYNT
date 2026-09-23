@@ -2,8 +2,17 @@ import { NextResponse } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { enforceMutationRateLimit } from '@/lib/api/rate-limit'
+import { hasUnexpectedBody } from '@/lib/api/request'
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (await hasUnexpectedBody(request)) {
+    return NextResponse.json(
+      { error: 'This endpoint does not accept a request body.' },
+      { status: 400 },
+    )
+  }
+
   const supabase = await createClient()
 
   const {
@@ -20,6 +29,12 @@ export async function POST() {
       },
     )
   }
+
+  const rateLimitResponse = await enforceMutationRateLimit(
+    supabase,
+    'account.delete',
+  )
+  if (rateLimitResponse) return rateLimitResponse
 
   const serviceRoleKey =
     process.env

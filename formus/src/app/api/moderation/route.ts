@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
+import { readJsonObject, UUID_PATTERN } from '@/lib/api/request'
+import { enforceMutationRateLimit } from '@/lib/api/rate-limit'
 
 const ALLOWED_ROLES = [
   'user',
@@ -57,8 +59,20 @@ export async function PATCH(
       )
     }
 
-    const body =
-      await request.json()
+    const rateLimitResponse = await enforceMutationRateLimit(
+      supabase,
+      'admin.moderators',
+    )
+    if (rateLimitResponse) return rateLimitResponse
+
+    const parsedBody = await readJsonObject(request)
+    if (!parsedBody.ok) {
+      return NextResponse.json(
+        { error: parsedBody.message },
+        { status: parsedBody.status },
+      )
+    }
+    const body = parsedBody.value
 
     const targetUserId =
       typeof body.userId === 'string'
@@ -70,7 +84,7 @@ export async function PATCH(
         ? body.role
         : ''
 
-    if (!targetUserId) {
+    if (!UUID_PATTERN.test(targetUserId)) {
       return NextResponse.json(
         {
           error:
@@ -175,8 +189,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           error:
-            error.message ||
-            'Unable to update role.',
+          'Unable to update role.',
         },
         {
           status: 500,
