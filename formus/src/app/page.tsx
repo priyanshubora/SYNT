@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import ForumShellWithCounts from '@/components/forum/forum-shell-with-counts'
+import ForumShellWithCounts, { getCategoryCounts } from '@/components/forum/forum-shell-with-counts'
 import RealtimeRefresh from '@/components/forum/realtime-refresh'
 import SortFilter from '@/components/forum/sort-filter'
 import ThreadCard from '@/components/forum/thread-card'
@@ -46,6 +46,7 @@ export default async function HomePage({
       : 1
 
   const supabase = await createClient()
+  const categoryCountsPromise = getCategoryCounts()
 
   /*
    * TOP and MOST REPLIES only
@@ -122,9 +123,10 @@ export default async function HomePage({
     initialFrom + THREADS_PER_PAGE - 1,
   )
 
-  const [countResult, initialThreadsResult] = await Promise.all([
+  const [countResult, initialThreadsResult, categoryCounts] = await Promise.all([
     countQuery,
     initialThreadsPromise,
+    categoryCountsPromise,
   ])
 
   const {
@@ -248,7 +250,7 @@ export default async function HomePage({
         ]}
       />
 
-      <ForumShellWithCounts>
+      <ForumShellWithCounts counts={categoryCounts}>
         <div className="mx-auto max-w-4xl">
 
         {/* HEADER */}

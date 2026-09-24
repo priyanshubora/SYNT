@@ -4,9 +4,10 @@ import ForumShell from './forum-shell'
 type ForumShellWithCountsProps = {
   children: React.ReactNode
   activeSlug?: string
+  counts?: Record<string, number>
 }
 
-async function getCategoryCounts() {
+export async function getCategoryCounts() {
   const supabase = await createClient()
   const counts: Record<string, number> = {}
   const { data, error } = await supabase
@@ -35,8 +36,9 @@ async function getCategoryCounts() {
 export default async function ForumShellWithCounts({
   children,
   activeSlug,
+  counts: suppliedCounts,
 }: ForumShellWithCountsProps) {
-  const counts = await getCategoryCounts()
+  const counts = suppliedCounts ?? await getCategoryCounts()
 
   return (
     <ForumShell activeSlug={activeSlug} counts={counts}>

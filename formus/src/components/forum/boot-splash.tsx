@@ -6,28 +6,16 @@ export default function BootSplash() {
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
-    const hasSeenSplash =
-      window.sessionStorage.getItem(
-        'snyt-boot-splash-seen',
-      )
-
-    if (hasSeenSplash === '1') {
-      const frame = window.requestAnimationFrame(() => {
-        setVisible(false)
-      })
-      return () => window.cancelAnimationFrame(frame)
-    }
-
-    const timer = window.setTimeout(() => {
+    const frame = window.requestAnimationFrame(() => {
       setVisible(false)
       window.sessionStorage.setItem(
         'snyt-boot-splash-seen',
         '1',
       )
-    }, 550)
+    })
 
     return () => {
-      window.clearTimeout(timer)
+      window.cancelAnimationFrame(frame)
     }
   }, [])
 
