@@ -1,8 +1,8 @@
 SNYT
 SNYT | Esports Community & Discussion Platform
 
-Live: https://your-domain.com
-GitHub: https://github.com/yourusername/snyt
+Live: www.snyt.com
+GitHub: https://github.com/priyanshubora/snyt
 
 A full-stack esports community platform inspired by modern competitive-gaming forums, built from the ground up with Next.js, TypeScript, PostgreSQL and Supabase. Users can create discussions, comment, vote, follow community activity, manage profiles, and participate in a role-based moderation system.
 
