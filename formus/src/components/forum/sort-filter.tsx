@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 type SortType = 'latest' | 'top' | 'replies'
@@ -24,6 +24,11 @@ export default function SortFilter({
   basePath,
 }: SortFilterProps) {
   const router = useRouter()
+  const [selectedSort, setSelectedSort] = useState(currentSort)
+
+  useEffect(() => {
+    setSelectedSort(currentSort)
+  }, [currentSort])
 
   const goToSort = (value: SortType) => {
     const href =
@@ -31,6 +36,7 @@ export default function SortFilter({
         ? basePath
         : `${basePath}?sort=${value}`
 
+    setSelectedSort(value)
     startTransition(() => {
       router.push(href, { scroll: false })
     })
@@ -41,10 +47,10 @@ export default function SortFilter({
       <span
         className="sort-filter__indicator"
         aria-hidden="true"
-        style={{ transform: `translateX(${options.findIndex(({ value }) => value === currentSort) * 100}%)` }}
+        style={{ transform: `translateX(${options.findIndex(({ value }) => value === selectedSort) * 100}%)` }}
       />
       {options.map(({ value, label }) => {
-        const active = currentSort === value
+        const active = selectedSort === value
 
         return (
           <button
