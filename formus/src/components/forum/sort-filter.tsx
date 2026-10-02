@@ -37,7 +37,12 @@ export default function SortFilter({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="sort-filter" role="group" aria-label="Sort discussions">
+      <span
+        className="sort-filter__indicator"
+        aria-hidden="true"
+        style={{ transform: `translateX(${options.findIndex(({ value }) => value === currentSort) * 100}%)` }}
+      />
       {options.map(({ value, label }) => {
         const active = currentSort === value
 
@@ -62,15 +67,8 @@ export default function SortFilter({
               router.prefetch(href)
             }}
             onClick={() => goToSort(value)}
-            className="rounded-full px-5 py-2 text-[10px] font-bold transition"
-            style={{
-              background: active
-                ? '#74A662'
-                : 'var(--surface-secondary)',
-              color: active
-                ? '#ffffff'
-                : 'var(--text-secondary)',
-            }}
+            aria-pressed={active}
+            className={`sort-filter__option${active ? ' is-active' : ''}`}
           >
             {label}
           </button>
