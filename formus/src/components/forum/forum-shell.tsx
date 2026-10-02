@@ -15,7 +15,8 @@ export default function ForumShell({
 }: ForumShellProps) {
   return (
     <div
-      className="flex min-h-screen flex-col"
+      className="forum-shell flex min-h-screen flex-col"
+      data-community={activeSlug}
       style={{
         background: 'var(--page-background)',
         color: 'var(--text-primary)',

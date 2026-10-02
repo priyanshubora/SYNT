@@ -129,6 +129,75 @@ button {
   cursor: pointer;
 }
 
+.forum-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.forum-shell[data-community]::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: var(--community-background);
+  background-position: 5% 48%;
+  background-size: 220% 220%;
+  animation: communityBackgroundDrift 36s ease-in-out infinite alternate;
+  content: '';
+  pointer-events: none;
+}
+
+.forum-shell[data-community='bgmi'] {
+  --community-background:
+    radial-gradient(ellipse at 12% 14%, rgba(249, 115, 22, 0.07), transparent 62%),
+    radial-gradient(ellipse at 88% 72%, rgba(234, 179, 8, 0.055), transparent 60%);
+}
+
+.forum-shell[data-community='valorant'] {
+  --community-background:
+    radial-gradient(ellipse at 10% 18%, rgba(225, 29, 72, 0.065), transparent 62%),
+    radial-gradient(ellipse at 92% 76%, rgba(153, 27, 27, 0.06), transparent 60%);
+}
+
+.forum-shell[data-community='chess'] {
+  --community-background:
+    radial-gradient(ellipse at 12% 18%, rgba(16, 185, 129, 0.06), transparent 62%),
+    radial-gradient(ellipse at 88% 76%, rgba(20, 83, 45, 0.05), transparent 60%);
+}
+
+.forum-shell[data-community='free-fire'] {
+  --community-background:
+    radial-gradient(ellipse at 12% 18%, rgba(249, 115, 22, 0.07), transparent 62%),
+    radial-gradient(ellipse at 90% 74%, rgba(37, 99, 235, 0.055), transparent 60%);
+}
+
+.forum-shell[data-community='offtopic'],
+.forum-shell[data-community='off-topic'] {
+  --community-background:
+    radial-gradient(ellipse at 12% 18%, rgba(6, 182, 212, 0.06), transparent 62%),
+    radial-gradient(ellipse at 90% 74%, rgba(124, 58, 237, 0.05), transparent 60%);
+}
+
+.forum-shell[data-community='esports'] {
+  --community-background:
+    radial-gradient(ellipse at 12% 18%, rgba(99, 102, 241, 0.065), transparent 62%),
+    radial-gradient(ellipse at 90% 74%, rgba(37, 99, 235, 0.055), transparent 60%);
+}
+
+@keyframes communityBackgroundDrift {
+  from {
+    background-position: 5% 48%;
+  }
+  to {
+    background-position: 95% 52%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forum-shell[data-community]::before {
+    animation: none;
+  }
+}
+
 .sort-filter {
   position: relative;
   display: grid;
