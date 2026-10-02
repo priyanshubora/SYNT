@@ -193,6 +193,31 @@ export default function ForumHeader() {
           </Link>
         </div>
       </div>
+
+      <nav
+        aria-label="Main navigation"
+        className="mx-auto grid h-11 w-full max-w-[1400px] grid-cols-3 border-t border-white/10 px-3 sm:hidden"
+      >
+        {[
+          { label: 'Home', href: '/', active: pathname === '/' },
+          { label: 'Rules', href: '/rules', active: isRulesActive },
+          { label: 'About', href: '/about', active: isAboutActive },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            prefetch={true}
+            aria-current={item.active ? 'page' : undefined}
+            className={`flex min-h-11 items-center justify-center border-b-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
+              item.active
+                ? 'border-[#74A662] text-white'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   )
 }

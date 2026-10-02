@@ -663,7 +663,7 @@ export default function CommentSection({
             id={`comment-${comment.id}`}
           >
             <article
-              className={`border-b px-4 py-5 last:border-b-0 sm:px-5 ${
+              className={`comment-card border-b px-4 py-5 last:border-b-0 sm:px-5 ${
                 isHighlighted
                   ? 'ring-2 ring-[var(--accent)] ring-inset'
                   : ''
@@ -674,7 +674,9 @@ export default function CommentSection({
                 background:
                   isHighlighted
                     ? 'var(--accent-soft)'
-                    : 'transparent',
+                    : isReply
+                      ? 'transparent'
+                      : 'color-mix(in srgb, var(--surface-secondary) 42%, var(--surface))',
               }}
             >
               <div className="flex gap-3">
@@ -935,7 +937,7 @@ export default function CommentSection({
                         )
                       }
                       disabled={isLocked}
-                      className="text-xs font-semibold transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex min-h-10 items-center rounded-md px-2 text-xs font-semibold transition hover:bg-[var(--surface-secondary)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                       style={{
                         color:
                           'var(--text-muted)',
@@ -951,7 +953,7 @@ export default function CommentSection({
                           comment,
                         )
                       }
-                      className="text-xs font-semibold transition hover:opacity-70"
+                      className="inline-flex min-h-10 items-center rounded-md px-2 text-xs font-semibold transition hover:bg-[var(--surface-secondary)] hover:opacity-90"
                       style={{
                         color:
                           'var(--text-muted)',
@@ -971,7 +973,7 @@ export default function CommentSection({
                     <button
                       type="button"
                       onClick={() => toggleReplies(comment.id)}
-                      className="mt-3 flex items-center gap-2 text-xs font-semibold hover:opacity-70"
+                      className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md pr-2 text-xs font-semibold hover:opacity-70"
                       style={{
                         color: 'var(--text-muted)',
                       }}
@@ -992,7 +994,7 @@ export default function CommentSection({
                     <button
                       type="button"
                       onClick={() => toggleReplies(comment.id)}
-                      className="mt-3 flex items-center gap-2 text-xs font-semibold hover:opacity-70"
+                      className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md pr-2 text-xs font-semibold hover:opacity-70"
                       style={{
                         color: 'var(--text-muted)',
                       }}
@@ -1099,7 +1101,7 @@ export default function CommentSection({
                         </p>
                       )}
 
-                      <div className="mt-3 flex items-center justify-between">
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                         <span
                           className="text-[10px]"
@@ -1111,14 +1113,14 @@ export default function CommentSection({
                           Ctrl + Enter to reply
                         </span>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
 
                           <button
                             type="button"
                             onClick={
                               cancelReply
                             }
-                            className="border px-3 py-1.5 text-[10px] font-semibold"
+                            className="min-h-10 border px-4 text-xs font-semibold"
                             style={{
                               background:
                                 'var(--surface)',
@@ -1141,7 +1143,7 @@ export default function CommentSection({
                             disabled={
                               replyPosting
                             }
-                            className="border px-3 py-1.5 text-[10px] font-bold"
+                            className="min-h-10 border px-4 text-xs font-bold"
                             style={{
                               background:
                                 'var(--accent)',
@@ -1172,7 +1174,10 @@ export default function CommentSection({
             {/* EXPANDED REPLIES (Instagram Style - Flat Indentation) */}
 
             {!isReply && isExpanded && allReplies.length > 0 && (
-              <div>
+              <div
+                className="comment-replies ml-2 border-l pl-2 sm:ml-6 sm:pl-4"
+                style={{ borderColor: 'var(--border)' }}
+              >
                 {allReplies.map((reply) => {
                   const replyIsHighlighted = highlightedId === reply.id
                   const replyToUsername = getParentUsername(reply.parent_id)
@@ -1194,7 +1199,7 @@ export default function CommentSection({
                       }}
                     >
                       <div className="flex gap-3">
-                        <div className="min-w-0 flex-1 ml-9 sm:ml-12">
+                        <div className="ml-1 min-w-0 flex-1 sm:ml-2">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span
                               className="text-sm font-bold"
@@ -1283,22 +1288,21 @@ export default function CommentSection({
 
                           {/* CONTENT */}
 
+                          {replyToUsername && (
+                            <p
+                              className="mt-2 text-[11px] font-medium"
+                              style={{ color: 'var(--accent)' }}
+                            >
+                              Replying to @{replyToUsername}
+                            </p>
+                          )}
+
                           <p
                             className="comment-text mt-2 whitespace-pre-wrap text-sm leading-6"
                             style={{
                               color: 'var(--text-secondary)',
                             }}
                           >
-                            {replyToUsername && (
-                              <span
-                                className="font-semibold"
-                                style={{
-                                  color: 'var(--text-primary)',
-                                }}
-                              >
-                                @{replyToUsername}{' '}
-                              </span>
-                            )}
                             {reply.content}
                           </p>
 
@@ -1382,9 +1386,9 @@ export default function CommentSection({
 
                             <button
                               type="button"
-                              onClick={() => startReply(comment.id)}
+                              onClick={() => startReply(reply.id)}
                               disabled={isLocked}
-                              className="text-xs font-semibold transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex min-h-10 items-center rounded-md px-2 text-xs font-semibold transition hover:bg-[var(--surface-secondary)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                               style={{
                                 color: 'var(--text-muted)',
                               }}
@@ -1395,7 +1399,7 @@ export default function CommentSection({
                             <button
                               type="button"
                               onClick={() => shareComment(reply)}
-                              className="text-xs font-semibold transition hover:opacity-70"
+                              className="inline-flex min-h-10 items-center rounded-md px-2 text-xs font-semibold transition hover:bg-[var(--surface-secondary)] hover:opacity-90"
                               style={{
                                 color: 'var(--text-muted)',
                               }}
@@ -1439,7 +1443,7 @@ export default function CommentSection({
                                     (event.ctrlKey || event.metaKey)
                                   ) {
                                     event.preventDefault()
-                                    submitReply(comment.id)
+                                    submitReply(reply.id)
                                   }
                                 }}
                                 rows={1}
@@ -1459,7 +1463,7 @@ export default function CommentSection({
                                 </p>
                               )}
 
-                              <div className="mt-3 flex items-center justify-between">
+                              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <span
                                   className="text-[10px]"
                                   style={{
@@ -1469,11 +1473,11 @@ export default function CommentSection({
                                   Ctrl + Enter to reply
                                 </span>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-end gap-2">
                                   <button
                                     type="button"
                                     onClick={cancelReply}
-                                    className="border px-3 py-1.5 text-[10px] font-semibold"
+                                    className="min-h-10 border px-4 text-xs font-semibold"
                                     style={{
                                       background: 'var(--surface)',
                                       borderColor: 'var(--border)',
@@ -1485,9 +1489,9 @@ export default function CommentSection({
 
                                   <button
                                     type="button"
-                                    onClick={() => submitReply(comment.id)}
+                                    onClick={() => submitReply(reply.id)}
                                     disabled={replyPosting}
-                                    className="border px-3 py-1.5 text-[10px] font-bold"
+                                    className="min-h-10 border px-4 text-xs font-bold"
                                     style={{
                                       background: 'var(--accent)',
                                       borderColor: 'var(--accent)',
@@ -1546,7 +1550,7 @@ export default function CommentSection({
       {/* COMMENT HEADER */}
 
       <div
-        className="comment-header flex items-center justify-between border-b px-4 py-3"
+        className="comment-header flex flex-wrap items-center justify-between gap-3 border-b px-3 py-3 sm:px-4"
         style={{
           background:
             'var(--surface)',
@@ -1554,7 +1558,7 @@ export default function CommentSection({
             'var(--border)',
         }}
       >
-        <div className="flex items-center gap-5">
+        <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-5">
 
           <button
             type="button"
@@ -1610,7 +1614,7 @@ export default function CommentSection({
 
         <button
           type="button"
-          className="border px-3 py-1.5 text-xs font-semibold"
+          className="inline-flex min-h-10 shrink-0 items-center border px-3 text-xs font-semibold"
           style={{
             background:
               'var(--surface-secondary)',
