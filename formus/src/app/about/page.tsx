@@ -134,16 +134,16 @@ export default async function AboutPage() {
 
   return (
     <ForumShell>
-      <div className="mx-auto max-w-4xl">
+      <div className="info-page info-page--about mx-auto max-w-4xl">
 
         {/* PAGE HEADER */}
 
-        <div className="mb-8">
-          <p className="text-sm font-medium text-neutral-500">
+        <div className="info-page__enter mb-8">
+          <p className="info-page__eyebrow text-sm font-medium text-neutral-500">
             FORMUS
           </p>
 
-          <h1 className="mt-1 text-3xl font-bold">
+          <h1 className="info-page__title mt-1 text-3xl font-bold">
             About Formus
           </h1>
 
@@ -156,7 +156,7 @@ export default async function AboutPage() {
         {/* STORY */}
 
         <div
-          className="rounded-[15px] border p-6"
+          className="info-page__enter info-page__panel rounded-[15px] border p-6"
           style={{
             background: 'var(--surface)',
             borderColor: 'var(--border)',
@@ -193,13 +193,14 @@ export default async function AboutPage() {
         {/* LIVE STATS */}
 
         <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {stats.map((stat) => (
+            {stats.map((stat, index) => (
             <div
               key={stat.label}
-              className="rounded-[12px] border p-4 text-center"
+                className="info-page__enter info-page__stat rounded-[12px] border p-4 text-center"
               style={{
                 background: 'var(--surface)',
                 borderColor: 'var(--border)',
+                  animationDelay: `${160 + index * 75}ms`,
               }}
             >
               <span
@@ -227,19 +228,20 @@ export default async function AboutPage() {
 
         {/* FEATURES */}
 
-        <div className="mt-8">
+        <div className="info-page__section mt-8">
           <h2 className="text-[15px] font-bold">
             Built for competitive gaming
           </h2>
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {features.map((feature) => (
+            {features.map((feature, index) => (
               <div
                 key={feature.title}
-                className="flex gap-4 rounded-[12px] border p-4"
+                className="info-page__enter info-page__card flex gap-4 rounded-[12px] border p-4"
                 style={{
                   background: 'var(--surface-secondary)',
                   borderColor: 'var(--border)',
+                  animationDelay: `${120 + index * 80}ms`,
                 }}
               >
                 <span
@@ -277,7 +279,7 @@ export default async function AboutPage() {
 
         {/* COMMUNITIES */}
 
-        <div className="mt-8">
+        <div className="info-page__section mt-8">
           <div className="flex items-baseline justify-between">
             <h2 className="text-[15px] font-bold">
               Communities
@@ -294,21 +296,19 @@ export default async function AboutPage() {
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {communities.map((community) => (
+            {communities.map((community, index) => (
               <Link
                 key={community.slug}
                 href={`/category/${community.slug}`}
-                className="group flex items-start gap-3 rounded-[12px] border p-4 hover:bg-[#f7f9fc] dark:hover:bg-[#292929]"
+                className="info-page__enter info-page__card group flex items-start gap-3 rounded-[12px] border p-4 hover:bg-[#f7f9fc] dark:hover:bg-[#292929]"
                 style={{
                   background: 'var(--surface)',
                   borderColor: 'var(--border)',
-                  transitionProperty: 'background-color, border-color, color',
-                  transitionDuration: '150ms',
-                  transitionTimingFunction: 'ease-out',
+                  animationDelay: `${100 + index * 65}ms`,
                 }}
               >
-                <span
-                  className={`mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full ${
+              <span
+                className={`info-page__community-dot mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full ${
                     communityColors[community.slug] ?? 'bg-[#286ff1]'
                   }`}
                 />
@@ -340,7 +340,7 @@ export default async function AboutPage() {
         {/* CTA */}
 
         <div
-          className="mt-8 rounded-[15px] border border-dashed p-6 text-center"
+          className="info-page__enter info-page__cta mt-8 rounded-[15px] border border-dashed p-6 text-center"
           style={{
             borderColor: 'var(--border)',
           }}
@@ -361,14 +361,14 @@ export default async function AboutPage() {
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/login"
-              className="rounded-lg bg-[#74A662] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#669a56]"
+              className="info-page__button rounded-lg bg-[#74A662] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#669a56]"
             >
               Join Formus
             </Link>
 
             <Link
               href="/rules"
-              className="rounded-lg border bg-white px-4 py-2 text-[11px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
+              className="info-page__button rounded-lg border bg-white px-4 py-2 text-[11px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
               style={{
                 borderColor: 'var(--border)',
               }}

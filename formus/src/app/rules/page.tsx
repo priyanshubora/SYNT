@@ -78,16 +78,16 @@ const enforcement = [
 export default function RulesPage() {
   return (
     <ForumShell>
-      <div className="mx-auto max-w-4xl">
+      <div className="info-page info-page--rules mx-auto max-w-4xl">
 
         {/* PAGE HEADER */}
 
-        <div className="mb-8">
-          <p className="text-sm font-medium text-neutral-500">
+        <div className="info-page__enter mb-8">
+          <p className="info-page__eyebrow text-sm font-medium text-neutral-500">
             FORMUS
           </p>
 
-          <h1 className="mt-1 text-3xl font-bold">
+          <h1 className="info-page__title mt-1 text-3xl font-bold">
             Community rules
           </h1>
 
@@ -100,7 +100,7 @@ export default function RulesPage() {
         {/* RULES LIST */}
 
         <div
-          className="overflow-hidden rounded-[15px] border"
+          className="info-page__enter info-page__panel overflow-hidden rounded-[15px] border"
           style={{
             background: 'var(--surface)',
             borderColor: 'var(--border)',
@@ -109,15 +109,16 @@ export default function RulesPage() {
           {rules.map((rule, index) => (
             <div
               key={rule.title}
-              className={`flex gap-4 px-5 py-4 ${
+              className={`info-page__enter info-page__rule flex gap-4 px-5 py-4 ${
                 index < rules.length - 1 ? 'border-b' : ''
               }`}
               style={{
                 borderColor: 'var(--border)',
+                animationDelay: `${120 + index * 55}ms`,
               }}
             >
               <span
-                className="w-6 shrink-0 text-[13px] font-black tabular-nums"
+                className="info-page__rule-number w-6 shrink-0 text-[13px] font-black tabular-nums"
                 style={{
                   color: 'var(--accent)',
                 }}
@@ -150,7 +151,7 @@ export default function RulesPage() {
 
         {/* ENFORCEMENT */}
 
-        <div className="mt-8">
+        <div className="info-page__section mt-8">
           <h2 className="text-[15px] font-bold">
             How enforcement works
           </h2>
@@ -169,10 +170,11 @@ export default function RulesPage() {
             {enforcement.map((step, index) => (
               <div
                 key={step.stage}
-                className="rounded-[12px] border p-4"
+                className="info-page__enter info-page__card rounded-[12px] border p-4"
                 style={{
                   background: 'var(--surface-secondary)',
                   borderColor: 'var(--border)',
+                  animationDelay: `${120 + index * 85}ms`,
                 }}
               >
                 <span
@@ -209,7 +211,7 @@ export default function RulesPage() {
         {/* CTA */}
 
         <div
-          className="mt-8 rounded-[15px] border border-dashed p-6 text-center"
+          className="info-page__enter info-page__cta mt-8 rounded-[15px] border border-dashed p-6 text-center"
           style={{
             borderColor: 'var(--border)',
           }}
@@ -230,14 +232,14 @@ export default function RulesPage() {
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/new"
-              className="rounded-lg bg-[#74A662] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#669a56]"
+              className="info-page__button rounded-lg bg-[#74A662] px-4 py-2 text-[11px] font-bold text-white transition hover:bg-[#669a56]"
             >
               Start a discussion
             </Link>
 
             <Link
               href="/about"
-              className="rounded-lg border bg-white px-4 py-2 text-[11px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
+              className="info-page__button rounded-lg border bg-white px-4 py-2 text-[11px] font-medium text-[#657286] transition hover:bg-[#f5f7fa] dark:bg-[#222] dark:text-[#999] dark:hover:bg-[#292929]"
               style={{
                 borderColor: 'var(--border)',
               }}

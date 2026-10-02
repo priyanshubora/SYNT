@@ -197,9 +197,183 @@ button {
   }
 }
 
+.info-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.info-page__enter {
+  animation: infoPageEnter 560ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.info-page__eyebrow {
+  color: var(--accent) !important;
+  letter-spacing: 0.24em;
+}
+
+.info-page__title {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  text-wrap: balance;
+  text-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.info-page__title::after {
+  display: block;
+  width: 3.25rem;
+  height: 3px;
+  margin-top: 0.7rem;
+  background: linear-gradient(90deg, var(--accent), #74a662 75%, transparent);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: infoTitleAccent 700ms 180ms cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
+}
+
+.info-page__panel {
+  box-shadow: 0 14px 44px color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.info-page__rule {
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.info-page__rule:hover {
+  background: var(--surface-secondary);
+  transform: translateX(3px);
+}
+
+.info-page__rule:focus-within {
+  background: var(--surface-secondary);
+}
+
+.info-page__rule-number {
+  display: grid;
+  height: 1.6rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.info-page__card {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+
+.info-page__card:hover,
+.info-page__card:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 10%, transparent);
+  transform: translateY(-3px);
+}
+
+.info-page__stat {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.info-page__stat:hover {
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 11%, transparent);
+  transform: translateY(-4px);
+}
+
+.info-page__community-dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 8%, transparent);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.info-page__card:hover .info-page__community-dot {
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 15%, transparent), 0 0 16px currentColor;
+  transform: scale(1.15);
+}
+
+.info-page__cta {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-soft) 60%, var(--surface)), var(--surface));
+}
+
+.info-page__cta::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, color-mix(in srgb, #ffffff 28%, transparent) 48%, transparent 66%);
+  content: '';
+  pointer-events: none;
+  transform: translateX(-110%);
+  transition: transform 800ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.info-page__cta:hover::before {
+  transform: translateX(110%);
+}
+
+.info-page__cta > * {
+  position: relative;
+  z-index: 1;
+}
+
+.info-page__button {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.info-page__button:hover {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateY(-2px);
+}
+
+.info-page__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@keyframes infoPageEnter {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes infoTitleAccent {
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .forum-shell[data-community]::before {
+  .forum-shell[data-community]::before,
+  .forum-shell[data-page-background='home']::before {
     animation: none;
+  }
+
+  .info-page__enter,
+  .info-page__title::after,
+  .info-page__rule,
+  .info-page__card,
+  .info-page__stat,
+  .info-page__community-dot,
+  .info-page__button,
+  .info-page__cta::before {
+    animation: none;
+    transition: none;
+  }
+
+  .info-page__rule,
+  .info-page__card,
+  .info-page__stat,
+  .info-page__button {
+    transform: none;
+  }
+
+  .info-page__enter {
+    opacity: 1;
+    filter: none;
+  }
+
+  .info-page__title::after {
+    transform: scaleX(1);
   }
 }
 
