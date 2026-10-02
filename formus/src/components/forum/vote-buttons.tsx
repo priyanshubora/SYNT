@@ -27,6 +27,7 @@ export default function VoteButtons({
     userVote: number | null
   } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [voteError, setVoteError] = useState(false)
 
   const optimisticStateIsCurrent =
     optimisticState?.baseScore === initialScore &&
@@ -47,6 +48,7 @@ export default function VoteButtons({
     }
 
     setLoading(true)
+    setVoteError(false)
     const previousScore = score
     const previousVote = userVote
     const removingVote = previousVote === value
@@ -81,6 +83,7 @@ export default function VoteButtons({
           userVote: previousVote,
         })
         setLoading(false)
+        setVoteError(true)
         return
       }
 
@@ -113,6 +116,7 @@ export default function VoteButtons({
         userVote: previousVote,
       })
       setLoading(false)
+      setVoteError(true)
       return
     }
 
@@ -120,14 +124,14 @@ export default function VoteButtons({
   }
 
   return (
-    <div className="flex w-[38px] flex-col items-center">
+    <div className="relative flex w-11 flex-col items-center">
       {/* UPVOTE */}
       <button
         type="button"
         disabled={loading}
         onClick={() => handleVote(1)}
         aria-label="Upvote thread"
-        className={`flex h-7 w-7 items-center justify-center text-[17px] font-semibold leading-none transition ${
+        className={`flex h-11 w-11 items-center justify-center text-[18px] font-semibold leading-none transition ${
           userVote === 1
             ? 'bg-[#e8f1ff] text-[#286ff1]'
             : 'text-[#788497] hover:bg-[#eef2f7] hover:text-[#286ff1] dark:hover:bg-[#303030]'
@@ -155,7 +159,7 @@ export default function VoteButtons({
         disabled={loading}
         onClick={() => handleVote(-1)}
         aria-label="Downvote thread"
-        className={`flex h-7 w-7 items-center justify-center text-[17px] font-semibold leading-none transition ${
+        className={`flex h-11 w-11 items-center justify-center text-[18px] font-semibold leading-none transition ${
           userVote === -1
             ? 'bg-[#fff0f0] text-[#ef4444]'
             : 'text-[#788497] hover:bg-[#fff4f4] hover:text-[#ef4444] dark:hover:bg-[#303030]'
@@ -163,6 +167,14 @@ export default function VoteButtons({
       >
         ↓
       </button>
+      {voteError && (
+        <span
+          role="alert"
+          className="absolute left-full top-1/2 z-10 ml-2 w-40 -translate-y-1/2 rounded-md border border-red-500/30 bg-[var(--surface)] px-2 py-1 text-center text-[10px] leading-4 text-red-500 shadow-lg"
+        >
+          Vote could not be saved. Try again.
+        </span>
+      )}
     </div>
   )
 }

@@ -46,12 +46,12 @@ const communities = [
 ]
 
 const communityColors: Record<string, string> = {
-  esports: 'bg-[#286ff1]',
-  bgmi: 'bg-[#ff7a00]',
-  valorant: 'bg-[#fa4454]',
-  chess: 'bg-[#64748b]',
-  'free-fire': 'bg-[#f59e0b]',
-  offtopic: 'bg-[#94a3b8]',
+  esports: 'bg-[#8b5cf6]',
+  bgmi: 'bg-[#facc15]',
+  valorant: 'bg-[#ef4444]',
+  chess: 'bg-[#22c55e]',
+  'free-fire': 'bg-[#f97316]',
+  offtopic: 'bg-[#7dd3fc]',
 }
 
 const features = [

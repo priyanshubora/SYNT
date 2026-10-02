@@ -101,7 +101,7 @@ export default function ForumHeader() {
             />
           </Link>
 
-          <nav className="flex h-full items-center">
+          <nav className="hidden h-full items-center sm:flex">
             <Link
               href="/category/offtopic"
               prefetch={true}
@@ -165,7 +165,7 @@ export default function ForumHeader() {
               title={
                 darkMode ? 'Switch to light mode' : 'Switch to dark mode'
               }
-              className="flex h-8 w-8 items-center justify-center text-[15px] text-white/80 transition hover:text-white"
+              className="flex h-11 w-11 items-center justify-center text-[15px] text-white/80 transition hover:text-white"
             >
               {darkMode ? '☀' : '☾'}
             </button>
@@ -176,7 +176,7 @@ export default function ForumHeader() {
             prefetch={true}
             onMouseEnter={() => router.prefetch('/profile')}
             onFocus={() => router.prefetch('/profile')}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] transition hover:border-white/20 hover:bg-white/[0.05]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] transition hover:border-white/20 hover:bg-white/[0.05]"
             aria-label="Profile"
           >
             {avatarUrl ? (

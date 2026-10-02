@@ -357,7 +357,7 @@ export default function NotificationBell() {
             loadNotifications(true)
           }
         }}
-        className="relative flex h-9 w-9 items-center justify-center border border-transparent text-[17px] transition hover:border-[#252525] hover:bg-[#111]"
+        className="relative flex h-11 w-11 items-center justify-center border border-transparent text-[17px] transition hover:border-[#252525] hover:bg-[#111]"
         style={{
           color:
             'var(--header-text)',

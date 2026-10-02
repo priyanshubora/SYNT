@@ -106,6 +106,8 @@ export default function SettingsForm({
 
   const [savingPreference, setSavingPreference] =
     useState<string | null>(null)
+  const [preferenceFeedback, setPreferenceFeedback] =
+    useState<{ kind: 'success' | 'error'; message: string } | null>(null)
 
   const [deleting, setDeleting] =
     useState(false)
@@ -171,6 +173,7 @@ export default function SettingsForm({
     }))
 
     setSavingPreference(key)
+    setPreferenceFeedback(null)
 
     const supabase = createClient()
 
@@ -179,6 +182,10 @@ export default function SettingsForm({
     } = await supabase.auth.getUser()
 
     if (!user) {
+      setPreferenceFeedback({
+        kind: 'error',
+        message: 'Please sign in again to save this preference.',
+      })
       setSavingPreference(null)
       return
     }
@@ -206,6 +213,15 @@ export default function SettingsForm({
         ...current,
         [key]: !nextValue,
       }))
+      setPreferenceFeedback({
+        kind: 'error',
+        message: 'Could not save that preference. Please try again.',
+      })
+    } else {
+      setPreferenceFeedback({
+        kind: 'success',
+        message: 'Notification preference saved.',
+      })
     }
 
     setSavingPreference(null)
@@ -494,6 +510,20 @@ export default function SettingsForm({
             loading={loadingPreferences}
             saving={savingPreference !== null}
           />
+          {preferenceFeedback && (
+            <p
+              role={preferenceFeedback.kind === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
+              className="px-5 py-3 text-xs"
+              style={{
+                color: preferenceFeedback.kind === 'error'
+                  ? 'var(--danger, #ef4444)'
+                  : 'var(--success, #16a34a)',
+              }}
+            >
+              {preferenceFeedback.message}
+            </p>
+          )}
         </div>
       </section>
 

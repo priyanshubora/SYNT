@@ -61,8 +61,8 @@ export default function ThreadCard({
     >
       <div className="flex gap-4">
         {/* VOTE COLUMN */}
-        <div className="flex w-[38px] shrink-0 flex-col items-center pt-1">
-          <span className="text-[13px] text-[#7b8798] transition group-hover:text-[#286ff1]">
+        <div className="flex w-[44px] shrink-0 flex-col items-center pt-1">
+          <span className="text-[14px] text-[#7b8798] transition group-hover:text-[#286ff1]">
             △
           </span>
 
@@ -78,7 +78,7 @@ export default function ThreadCard({
         {/* THREAD CONTENT */}
         <div className="min-w-0 flex-1">
           {/* META */}
-          <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[9px] text-[#9aa4b2] dark:text-[#888]">
+          <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[10px] text-[#9aa4b2] dark:text-[#888]">
             {thread.category_name && (
               <span className="rounded-[3px] bg-[#eef4ff] px-2 py-1 font-semibold text-[#4c76c4] dark:bg-[#26344a] dark:text-[#83aeff]">
                 {thread.category_name}
@@ -117,17 +117,17 @@ export default function ThreadCard({
           </div>
 
           {/* TITLE */}
-          <h2 className="text-[14px] font-bold leading-[1.35] text-[#111827] transition group-hover:text-[#2468db] dark:text-[#f4f4f5] sm:text-[15px]">
+          <h2 className="text-[15px] font-bold leading-[1.4] text-[#111827] transition group-hover:text-[#2468db] dark:text-[#f4f4f5] sm:text-[16px]">
             {thread.title}
           </h2>
 
           {/* CONTENT */}
-          <p className="mt-1 line-clamp-2 text-[11px] leading-[1.55] text-[#788497] dark:text-[#a1a1aa]">
+          <p className="mt-1 line-clamp-2 text-[12px] leading-[1.6] text-[#788497] dark:text-[#a1a1aa]">
             {thread.content}
           </p>
 
           {/* BOTTOM META */}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[9px] text-[#788497] dark:text-[#888]">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#788497] dark:text-[#888]">
             <span>
               ◉ {thread.comment_count ?? 0} replies
             </span>

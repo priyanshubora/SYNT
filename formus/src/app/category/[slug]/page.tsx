@@ -405,19 +405,45 @@ export default async function CategoryPage({
               )
             )
           ) : (
-            <div
-              className="px-6 py-12 text-center text-sm"
-              style={{
-                color:
-                  'var(--text-secondary)',
-              }}
-            >
-              {currentSort === 'top'
-                ? 'No top threads from the last 7 days.'
-                : currentSort ===
-                    'replies'
-                  ? 'No threads with replies from the last 7 days.'
-                  : 'No threads yet.'}
+            <div className="px-5 py-12 text-center sm:px-8">
+              <h2
+                className="text-base font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {currentSort === 'top'
+                  ? 'No top threads this week'
+                  : currentSort === 'replies'
+                    ? 'No replied threads this week'
+                    : 'Start this community’s first discussion'}
+              </h2>
+              <p
+                className="mx-auto mt-2 max-w-md text-sm leading-6"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {currentSort === 'latest'
+                  ? 'Share a question, idea, or update to get the conversation going.'
+                  : 'There are no threads matching this filter yet. Try the latest discussions or start one.'}
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={`/new?category=${category.id}`}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[var(--accent)] px-5 text-sm font-bold text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                >
+                  Create a thread
+                </Link>
+                {currentSort !== 'latest' && (
+                  <Link
+                    href={`/category/${slug}`}
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-lg border px-5 text-sm font-semibold transition hover:bg-[var(--surface-secondary)]"
+                    style={{
+                      borderColor: 'var(--border)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    View latest
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 

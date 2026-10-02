@@ -5,7 +5,7 @@ const communities = [
   { name: 'BGMI', slug: 'bgmi', dot: '#facc15' },
   { name: 'Valorant', slug: 'valorant', dot: '#ef4444' },
   { name: 'Chess', slug: 'chess', dot: '#22c55e' },
-  { name: 'Free Fire', slug: 'free-fire', dot: '#3b82f6' },
+  { name: 'Free Fire', slug: 'free-fire', dot: '#f97316' },
   { name: 'Off-Topic / Lounge', slug: 'offtopic', dot: '#7dd3fc' },
 ]
 

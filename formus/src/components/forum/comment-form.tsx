@@ -16,6 +16,7 @@ export default function CommentForm({
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [posted, setPosted] = useState(false)
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -31,6 +32,7 @@ export default function CommentForm({
 
     setSaving(true)
     setError('')
+    setPosted(false)
 
     const supabase = createClient()
 
@@ -78,6 +80,7 @@ export default function CommentForm({
 
     setContent('')
     setSaving(false)
+    setPosted(true)
 
     router.refresh()
   }
@@ -86,17 +89,28 @@ export default function CommentForm({
     <form onSubmit={handleSubmit}>
       <textarea
         value={content}
-        onChange={(event) =>
+        onChange={(event) => {
           setContent(event.target.value)
-        }
+          setPosted(false)
+        }}
         rows={5}
         placeholder="Join the discussion..."
         className="w-full resize-y rounded-lg border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm leading-6 outline-none focus:border-neutral-500"
       />
 
       {error && (
-        <p className="mt-3 text-sm text-red-400">
+        <p role="alert" className="mt-3 text-sm text-red-400">
           {error}
+        </p>
+      )}
+
+      {posted && (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mt-3 text-sm text-emerald-400"
+        >
+          Comment posted.
         </p>
       )}
 
@@ -104,7 +118,7 @@ export default function CommentForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+          className="min-h-[44px] rounded-lg bg-white px-5 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:opacity-50"
         >
           {saving ? 'Posting...' : 'Post Comment'}
         </button>
