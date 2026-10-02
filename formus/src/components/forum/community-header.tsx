@@ -19,6 +19,16 @@ const communityLogos: Record<string, string> = {
   esports: '/esports.png',
 }
 
+const communityBanners: Record<string, string> = {
+  bgmi: '/bgmi_community_background.png',
+  valorant: '/valorant_community_background.png',
+  chess: '/chess-banner.png',
+  'free-fire': '/free-fire-banner.png',
+  offtopic: '/offtopic-banner.png',
+  'off-topic': '/offtopic-banner.png',
+  esports: '/esports-banner.png',
+}
+
 export default function CommunityHeader({
   name,
   slug,
@@ -32,8 +42,8 @@ export default function CommunityHeader({
       {/* Background Banner Image */}
       <div className="absolute inset-0">
         <Image
-          src="/banner.png"
-          alt="Community banner"
+          src={communityBanners[slug] ?? '/banner.png'}
+          alt={`${name} community banner`}
           fill
           className="object-cover"
           priority
