@@ -72,32 +72,25 @@ export default async function ProfilePage({
         ? 'moderator'
         : 'user'
 
-  let teamName: string | null = null
-
-  if (profile.team_id) {
-    const { data: team } =
-      await supabase
+  const teamNamePromise = profile.team_id
+    ? supabase
         .from('teams')
         .select('name')
         .eq('id', profile.team_id)
         .single()
+        .then(({ data }) => data?.name ?? null)
+    : Promise.resolve(null)
 
-    teamName = team?.name ?? null
-  }
-
-  const {
-    count: totalThreadsCount,
-  } = await supabase
+  const totalThreadsPromise = supabase
     .from('thread_stats')
     .select('*', {
       count: 'exact',
       head: true,
     })
     .eq('author_id', user.id)
+    .then(({ count }) => count)
 
-  const {
-    count: totalCommentsCount,
-  } = await supabase
+  const totalCommentsPromise = supabase
     .from('comments')
     .select('*', {
       count: 'exact',
@@ -105,6 +98,61 @@ export default async function ProfilePage({
     })
     .eq('author_id', user.id)
     .is('deleted_at', null)
+    .then(({ count }) => count)
+
+  const threadsPromise = activeView === 'threads'
+    ? supabase
+        .from('thread_stats')
+        .select(`
+          id,
+          title,
+          category_name,
+          category_slug,
+          created_at,
+          score,
+          comment_count
+        `)
+        .eq('author_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(
+          (currentPage - 1) * PAGE_SIZE,
+          currentPage * PAGE_SIZE - 1,
+        )
+        .then(({ data }) => data ?? [])
+    : Promise.resolve([])
+
+  const commentsPromise = activeView === 'comments'
+    ? supabase
+        .from('comments')
+        .select(`
+          id,
+          thread_id,
+          content,
+          created_at
+        `)
+        .eq('author_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .range(
+          (currentPage - 1) * PAGE_SIZE,
+          currentPage * PAGE_SIZE - 1,
+        )
+        .then(({ data }) => data ?? [])
+    : Promise.resolve([])
+
+  const [
+    teamName,
+    totalThreadsCount,
+    totalCommentsCount,
+    threads,
+    comments,
+  ] = await Promise.all([
+    teamNamePromise,
+    totalThreadsPromise,
+    totalCommentsPromise,
+    threadsPromise,
+    commentsPromise,
+  ])
 
   const threadTotalPages = Math.max(
     1,
@@ -114,50 +162,6 @@ export default async function ProfilePage({
     1,
     Math.ceil((totalCommentsCount ?? 0) / PAGE_SIZE),
   )
-
-  const { data: threads } =
-    await supabase
-      .from('thread_stats')
-      .select(
-        `
-          id,
-          title,
-          category_name,
-          category_slug,
-          created_at,
-          score,
-          comment_count
-        `,
-      )
-      .eq('author_id', user.id)
-      .order('created_at', {
-        ascending: false,
-      })
-      .range(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE - 1,
-      )
-
-  const { data: comments } =
-    await supabase
-      .from('comments')
-      .select(
-        `
-          id,
-          thread_id,
-          content,
-          created_at
-        `,
-      )
-      .eq('author_id', user.id)
-      .is('deleted_at', null)
-      .order('created_at', {
-        ascending: false,
-      })
-      .range(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE - 1,
-      )
 
   const isModerator =
     role === 'moderator' ||
@@ -436,6 +440,7 @@ export default async function ProfilePage({
 
               <Link
                 href="/settings"
+                prefetch={true}
                 className="block px-5 py-3 text-xs font-semibold"
                 style={{
                   color:

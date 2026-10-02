@@ -573,6 +573,7 @@ export default function NotificationBell() {
           >
             <Link
               href="/settings"
+              prefetch={true}
               onClick={() =>
                 setOpen(false)
               }

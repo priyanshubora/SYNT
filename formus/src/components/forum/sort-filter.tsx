@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
 
 type SortType = 'latest' | 'top' | 'replies'
@@ -24,11 +24,7 @@ export default function SortFilter({
   basePath,
 }: SortFilterProps) {
   const router = useRouter()
-  const [selectedSort, setSelectedSort] = useState(currentSort)
-
-  useEffect(() => {
-    setSelectedSort(currentSort)
-  }, [currentSort])
+  const [selectedSort, setSelectedSort] = useOptimistic(currentSort)
 
   const goToSort = (value: SortType) => {
     const href =
@@ -36,8 +32,8 @@ export default function SortFilter({
         ? basePath
         : `${basePath}?sort=${value}`
 
-    setSelectedSort(value)
     startTransition(() => {
+      setSelectedSort(value)
       router.push(href, { scroll: false })
     })
   }

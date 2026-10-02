@@ -352,6 +352,7 @@ export default function SettingsForm({
         <div className="px-5 py-4">
           <Link
             href="/profile/edit"
+            prefetch={true}
             className="inline-flex border px-4 py-2 text-xs font-bold transition hover:bg-[var(--surface-secondary)]"
             style={{
               borderColor:
