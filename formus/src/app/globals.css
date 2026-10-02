@@ -129,6 +129,68 @@ button {
   cursor: pointer;
 }
 
+.forum-shell main a[href],
+.forum-shell main button:not(:disabled),
+.forum-header a[href],
+.forum-header button:not(:disabled),
+.community-list a,
+.community-mobile-nav__link {
+  transition-property: transform, box-shadow, filter, color, background-color, border-color, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.forum-shell main a[href]:hover,
+.forum-shell main button:not(:disabled):hover,
+.forum-header a[href]:hover,
+.forum-header button:not(:disabled):hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+.forum-shell main a[href]:active,
+.forum-shell main button:not(:disabled):active,
+.forum-header a[href]:active,
+.forum-header button:not(:disabled):active {
+  filter: brightness(0.98);
+  transform: scale(0.98);
+}
+
+.forum-shell main a[href]:focus-visible,
+.forum-shell main button:not(:disabled):focus-visible,
+.forum-header a[href]:focus-visible,
+.forum-header button:not(:disabled):focus-visible,
+.community-list a:focus-visible,
+.community-mobile-nav__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.forum-shell main button[aria-label^='Upvote']:hover {
+  filter: drop-shadow(0 2px 5px rgba(40, 111, 241, 0.28));
+  transform: scale(1.14) rotate(-3deg);
+}
+
+.forum-shell main button[aria-label^='Downvote']:hover {
+  filter: drop-shadow(0 2px 5px rgba(239, 68, 68, 0.25));
+  transform: scale(1.14) rotate(3deg);
+}
+
+.community-list a:hover {
+  background-color: #383838;
+  transform: translateX(4px);
+}
+
+.community-mobile-nav__link:hover {
+  box-shadow: 0 6px 16px rgba(24, 45, 20, 0.22);
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+
+.community-mobile-nav__link:active {
+  transform: scale(0.96);
+}
+
 .forum-shell {
   position: relative;
   isolation: isolate;
@@ -462,10 +524,19 @@ button {
 .thread-card {
   background: var(--surface);
   border-color: var(--border);
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
 .thread-card:hover {
   background: var(--surface-secondary);
+}
+
+.forum-shell main a.thread-card:hover {
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 10%, transparent);
+  filter: none;
+  transform: translateY(-2px);
 }
 
 .thread-card h2 {
@@ -474,6 +545,44 @@ button {
 
 .thread-card p {
   color: var(--text-secondary);
+}
+
+.forum-shell main input:hover,
+.forum-shell main textarea:hover,
+.forum-shell main select:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forum-shell main a[href],
+  .forum-shell main button:not(:disabled),
+  .forum-header a[href],
+  .forum-header button:not(:disabled),
+  .community-list a,
+  .community-mobile-nav__link,
+  .thread-card,
+  .forum-shell main input,
+  .forum-shell main textarea,
+  .forum-shell main select {
+    transition: none;
+  }
+
+  .forum-shell main a[href]:hover,
+  .forum-shell main a[href]:active,
+  .forum-shell main button:not(:disabled):hover,
+  .forum-shell main button:not(:disabled):active,
+  .forum-header a[href]:hover,
+  .forum-header a[href]:active,
+  .forum-header button:not(:disabled):hover,
+  .forum-header button:not(:disabled):active,
+  .community-list a:hover,
+  .community-mobile-nav__link:hover,
+  .community-mobile-nav__link:active,
+  .forum-shell main a.thread-card:hover {
+    transform: none;
+    filter: none;
+    box-shadow: none;
+  }
 }
 
 /* =========================================

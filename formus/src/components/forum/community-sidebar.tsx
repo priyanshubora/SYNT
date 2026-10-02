@@ -26,7 +26,7 @@ export default function CommunitySidebar({
       </div>
 
       <div
-        className="overflow-hidden rounded-[12px] border border-white/10 bg-[#2a2a2a]"
+        className="community-list overflow-hidden rounded-[12px] border border-white/10 bg-[#2a2a2a]"
       >
         {communities.map((community) => {
           const active = community.slug === activeSlug
