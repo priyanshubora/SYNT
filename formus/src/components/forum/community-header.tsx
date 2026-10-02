@@ -20,13 +20,13 @@ const communityLogos: Record<string, string> = {
 }
 
 const communityBanners: Record<string, string> = {
-  bgmi: '/bgmi_community_background.png',
-  valorant: '/valorant_community_background.png',
-  chess: '/chess-banner.png',
-  'free-fire': '/free-fire-banner.png',
-  offtopic: '/offtopic-banner.png',
-  'off-topic': '/offtopic-banner.png',
-  esports: '/esports-banner.png',
+  bgmi: '/bgmi-community-banner.webp',
+  valorant: '/valorant-community-banner.webp',
+  chess: '/chess-community-banner.webp',
+  'free-fire': '/free-fire-community-banner.webp',
+  offtopic: '/offtopic-community-banner.webp',
+  'off-topic': '/offtopic-community-banner.webp',
+  esports: '/esports-community-banner.webp',
 }
 
 export default function CommunityHeader({
@@ -46,6 +46,7 @@ export default function CommunityHeader({
           alt={`${name} community banner`}
           fill
           className="object-cover"
+          unoptimized
           priority
         />
       </div>

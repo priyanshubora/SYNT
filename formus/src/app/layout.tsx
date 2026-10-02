@@ -18,6 +18,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const communityBanners = [
+  "/bgmi-community-banner.webp",
+  "/valorant-community-banner.webp",
+  "/chess-community-banner.webp",
+  "/free-fire-community-banner.webp",
+  "/offtopic-community-banner.webp",
+  "/esports-community-banner.webp",
+];
+
 export const metadata: Metadata = {
   title: "Snyt",
   description:
@@ -30,6 +39,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {communityBanners.map((banner) => (
+          <link
+            key={banner}
+            rel="preload"
+            as="image"
+            href={banner}
+            fetchPriority="low"
+          />
+        ))}
+      </head>
       <body className="min-h-full flex flex-col">
         <BootSplash />
         {children}
