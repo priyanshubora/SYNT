@@ -45,7 +45,7 @@ export default function CommunityHeader({
           src={communityBanners[slug] ?? '/banner.png'}
           alt={`${name} community banner`}
           fill
-          className="object-cover"
+          className="community-header__banner-image object-cover"
           unoptimized
           priority
         />

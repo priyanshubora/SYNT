@@ -183,6 +183,11 @@ button {
     radial-gradient(ellipse at 90% 74%, rgba(37, 99, 235, 0.055), transparent 60%);
 }
 
+.community-header__banner-image {
+  opacity: 0.9;
+  filter: saturate(0.68) brightness(0.86);
+}
+
 @keyframes communityBackgroundDrift {
   from {
     background-position: 5% 48%;
